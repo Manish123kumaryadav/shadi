@@ -1,0 +1,142 @@
+.footer-page {
+  min-height: 100vh;
+  background: #f5f7fa;
+  color: #2c3e50;
+}
+
+.footer-page-hero {
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 55%, #34495e 100%);
+  color: white;
+  padding: 70px 20px;
+  text-align: center;
+}
+
+.footer-page-hero h1 {
+  margin: 16px 0 10px;
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: white;
+}
+
+.footer-page-hero p {
+  max-width: 650px;
+  margin: 0 auto;
+  font-size: 1.1rem;
+  opacity: 0.92;
+}
+
+.footer-search,
+.footer-page-content,
+.footer-page-actions {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 24px 20px 0;
+}
+
+.footer-search input {
+  width: 100%;
+  padding: 0.9rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #d5dce3;
+  background: white;
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 18px;
+}
+
+.footer-card,
+.accordion-row {
+  border: 1px solid #e1e7ed;
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: left;
+  cursor: pointer;
+  color: #2c3e50;
+  box-shadow: 0 4px 14px rgba(44, 62, 80, 0.08);
+}
+
+.footer-card.selected {
+  border-color: #e74c3c;
+  box-shadow: 0 8px 24px rgba(231, 76, 60, 0.16);
+}
+
+.footer-card span {
+  color: #e74c3c;
+  font-weight: 700;
+}
+
+.footer-card h3 {
+  margin: 8px 0;
+}
+
+.footer-card p,
+.accordion-row p,
+.footer-checklist p {
+  color: #667788;
+  line-height: 1.5;
+}
+
+.footer-accordion {
+  display: grid;
+  gap: 14px;
+}
+
+.accordion-row span {
+  display: block;
+  font-weight: 700;
+}
+
+.accordion-row.open {
+  border-color: #e74c3c;
+}
+
+.footer-checklist {
+  display: grid;
+  gap: 12px;
+}
+
+.footer-checklist label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: white;
+  border: 1px solid #e1e7ed;
+  border-radius: 8px;
+}
+
+.footer-checklist label.checked {
+  border-color: #27ae60;
+  background: #f0fff6;
+}
+
+.footer-form {
+  display: grid;
+  gap: 16px;
+  background: white;
+  border: 1px solid #e1e7ed;
+  border-radius: 8px;
+  padding: 24px;
+}
+
+.footer-form textarea {
+  resize: vertical;
+}
+
+.footer-page-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  padding-bottom: 50px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 600px) {
+  .footer-page-hero h1 {
+    font-size: 2rem;
+  }
+}

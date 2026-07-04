@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>ShadiMatch User and Developer Manual</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 18mm;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      color: #243444;
+      line-height: 1.55;
+      background: #ffffff;
+    }
+
+    .cover {
+      min-height: 92vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 36px;
+      background: linear-gradient(135deg, #e74c3c 0%, #c0392b 52%, #2c3e50 100%);
+      color: white;
+      border-radius: 12px;
+    }
+
+    .cover h1 {
+      font-size: 46px;
+      line-height: 1.1;
+      margin: 0 0 16px;
+    }
+
+    .cover p {
+      font-size: 18px;
+      max-width: 620px;
+      margin: 6px 0;
+    }
+
+    .badge {
+      display: inline-block;
+      width: fit-content;
+      margin-bottom: 28px;
+      padding: 8px 14px;
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      border-radius: 999px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      font-size: 12px;
+    }
+
+    h2 {
+      margin: 34px 0 12px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #e74c3c;
+      color: #2c3e50;
+      page-break-after: avoid;
+    }
+
+    h3 {
+      margin: 22px 0 8px;
+      color: #c0392b;
+      page-break-after: avoid;
+    }
+
+    p {
+      margin: 8px 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0 18px;
+      page-break-inside: avoid;
+    }
+
+    th,
+    td {
+      border: 1px solid #d8e0e8;
+      padding: 9px 10px;
+      vertical-align: top;
+      font-size: 13px;
+    }
+
+    th {
+      background: #f4f7fa;
+      color: #2c3e50;
+      text-align: left;
+    }
+
+    code,
+    pre {
+      font-family: Consolas, "Courier New", monospace;
+    }
+
+    code {
+      background: #f3f5f7;
+      padding: 2px 5px;
+      border-radius: 4px;
+      color: #a93226;
+    }
+
+    pre {
+      margin: 12px 0 18px;
+      padding: 14px;
+      background: #17212b;
+      color: #f8fafc;
+      border-radius: 8px;
+      white-space: pre-wrap;
+      font-size: 12px;
+      page-break-inside: avoid;
+    }
+
+    ul,
+    ol {
+      margin: 8px 0 14px 22px;
+      padding: 0;
+    }
+
+    li {
+      margin: 5px 0;
+    }
+
+    .note {
+      margin: 14px 0;
+      padding: 12px 14px;
+      border-left: 4px solid #3498db;
+      background: #eef7ff;
+      page-break-inside: avoid;
+    }
+
+    .warning {
+      border-left-color: #f39c12;
+      background: #fff8e8;
+    }
+
+    .page-break {
+      page-break-before: always;
+    }
+
+    .toc a {
+      color: #2c3e50;
+      text-decoration: none;
+    }
+
+    .small {
+      color: #647586;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <section class="cover">
+    <span class="badge">Project Manual</span>
+    <h1>ShadiMatch User and Developer Manual</h1>
+    <p>Complete guide for running, testing, and maintaining the ShadiMatch matrimony web application.</p>
+    <p><strong>Frontend:</strong> React + Vite</p>
+    <p><strong>Backend:</strong> Node.js + Express + Sequelize + MySQL</p>
+    <p><strong>Realtime Chat:</strong> Socket.IO</p>
+    <p><strong>Document:</strong> Generated for local project handover and testing.</p>
+  </section>
+
+  <section class="page-break toc">
+    <h2>Table of Contents</h2>
+    <ol>
+      <li><a href="#overview">Project Overview</a></li>
+      <li><a href="#features">Main Features</a></li>
+      <li><a href="#requirements">System Requirements</a></li>
+      <li><a href="#setup">Setup and Run</a></li>
+      <li><a href="#database">Database and Tables</a></li>
+      <li><a href="#auth">Registration and OTP Login</a></li>
+      <li><a href="#test-users">Test Users</a></li>
+      <li><a href="#matching">Matching Rules</a></li>
+      <li><a href="#chat">Realtime Chat and Offline Email</a></li>
+      <li><a href="#frontend">Frontend Pages</a></li>
+      <li><a href="#api">API Reference</a></li>
+      <li><a href="#troubleshooting">Troubleshooting</a></li>
+      <li><a href="#production">Production Checklist</a></li>
+    </ol>
+  </section>
+
+  <section id="overview" class="page-break">
+    <h2>1. Project Overview</h2>
+    <p>ShadiMatch is a matrimony-style matching application. It allows users to register, verify login using mobile OTP, browse compatible profiles, like or pass profiles, start conversations, and receive offline message email notifications.</p>
+    <p>The application is split into two parts:</p>
+    <ul>
+      <li><strong>Frontend:</strong> React app inside the <code>src</code> folder.</li>
+      <li><strong>Backend:</strong> Express API and Socket.IO server inside the <code>server</code> folder.</li>
+    </ul>
+
+    <h3>Folder Structure</h3>
+    <table>
+      <tr><th>Path</th><th>Purpose</th></tr>
+      <tr><td><code>src/pages</code></td><td>React pages such as Home, Register, Login, Browse, Messages, Profile, Likes, and footer information pages.</td></tr>
+      <tr><td><code>src/components</code></td><td>Reusable UI components such as Navbar and ProfileCard.</td></tr>
+      <tr><td><code>src/services/api.js</code></td><td>Axios API client and Socket.IO client setup.</td></tr>
+      <tr><td><code>server/routes</code></td><td>Express routes for auth, profiles, matches, and messages.</td></tr>
+      <tr><td><code>server/models</code></td><td>Sequelize models and relationships.</td></tr>
+      <tr><td><code>server/socket</code></td><td>Socket.IO connection and room handling.</td></tr>
+      <tr><td><code>server/services</code></td><td>Presence and email notification services.</td></tr>
+    </table>
+  </section>
+
+  <section id="features">
+    <h2>2. Main Features</h2>
+    <ul>
+      <li>Mobile number collected during registration.</li>
+      <li>OTP based login using registered mobile number.</li>
+      <li>JWT authentication for protected API routes.</li>
+      <li>10 male and 10 female seeded test users.</li>
+      <li>Male test user sees 10 female matches.</li>
+      <li>Female test user sees 10 male matches.</li>
+      <li>Like, pass, views, and conversation start support.</li>
+      <li>Realtime chat using Socket.IO rooms.</li>
+      <li>Email notification when recipient is offline.</li>
+      <li>Interactive footer pages for About, Blog, Careers, Help, Contact, FAQ, Privacy, Terms, and Safety.</li>
+    </ul>
+  </section>
+
+  <section id="requirements">
+    <h2>3. System Requirements</h2>
+    <table>
+      <tr><th>Tool</th><th>Recommended</th><th>Notes</th></tr>
+      <tr><td>Node.js</td><td>20 or newer</td><td>Used for React build and Express API.</td></tr>
+      <tr><td>MySQL</td><td>8 or compatible</td><td>Database name should be <code>shadiDB</code>.</td></tr>
+      <tr><td>npm</td><td>Bundled with Node</td><td>Used to install dependencies and run scripts.</td></tr>
+      <tr><td>Browser</td><td>Chrome or Edge</td><td>Used to test the frontend.</td></tr>
+    </table>
+  </section>
+
+  <section id="setup" class="page-break">
+    <h2>4. Setup and Run</h2>
+    <h3>Install Dependencies</h3>
+    <pre>npm install</pre>
+
+    <h3>Configure Environment</h3>
+    <p>Edit <code>.env</code> in the project root:</p>
+    <pre>PORT=5000
+CLIENT_URL=http://127.0.0.1:5173,http://localhost:5173
+
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_NAME=shadiDB
+DB_USER=root
+DB_PASSWORD=
+
+JWT_SECRET=change-this-secret-before-production</pre>
+
+    <h3>Start Backend</h3>
+    <pre>npm run server</pre>
+    <p>Backend URL:</p>
+    <pre>http://127.0.0.1:5000</pre>
+
+    <h3>Start Frontend</h3>
+    <pre>npm run dev</pre>
+    <p>Frontend URL:</p>
+    <pre>http://127.0.0.1:5173</pre>
+
+    <h3>Build Frontend</h3>
+    <pre>npm run build</pre>
+  </section>
+
+  <section id="database">
+    <h2>5. Database and Tables</h2>
+    <p>The backend uses Sequelize ORM. On startup, the server runs:</p>
+    <pre>sequelize.sync({ alter: true })</pre>
+    <p>This creates or updates the required MySQL tables automatically.</p>
+
+    <h3>Main Tables</h3>
+    <table>
+      <tr><th>Table</th><th>Purpose</th></tr>
+      <tr><td>Users</td><td>Stores account, mobile, OTP, gender, lookingFor, DOB, and auth data.</td></tr>
+      <tr><td>Profiles</td><td>Stores religion, caste, location, education, occupation, height, bio, and interests.</td></tr>
+      <tr><td>Photos</td><td>Stores profile photo URLs.</td></tr>
+      <tr><td>Likes</td><td>Stores like/pass actions.</td></tr>
+      <tr><td>ProfileViews</td><td>Stores profile view records.</td></tr>
+      <tr><td>Conversations</td><td>Stores chat conversation records.</td></tr>
+      <tr><td>ConversationMembers</td><td>Maps users to conversations.</td></tr>
+      <tr><td>Messages</td><td>Stores chat messages.</td></tr>
+    </table>
+  </section>
+
+  <section id="auth" class="page-break">
+    <h2>6. Registration and OTP Login</h2>
+    <h3>Registration Flow</h3>
+    <ol>
+      <li>User opens <code>/register</code>.</li>
+      <li>User enters full name, email, mobile number, password, DOB, religion, and preferences.</li>
+      <li>Backend creates the user and profile.</li>
+      <li>User is redirected to <code>/login</code>.</li>
+    </ol>
+
+    <h3>OTP Login Flow</h3>
+    <ol>
+      <li>User opens <code>/login</code>.</li>
+      <li>User enters registered mobile number.</li>
+      <li>Backend generates a 6 digit OTP.</li>
+      <li>User enters OTP.</li>
+      <li>Backend verifies OTP and returns JWT token.</li>
+      <li>Frontend stores token in <code>localStorage</code> and redirects to <code>/browse</code>.</li>
+    </ol>
+
+    <div class="note warning">
+      <strong>Development note:</strong> OTP is currently returned as <code>devOtp</code> and shown in the UI. For production, connect an SMS provider and remove OTP display from the frontend.
+    </div>
+  </section>
+
+  <section id="test-users">
+    <h2>7. Test Users</h2>
+    <p>All seeded users use password <code>password123</code> for legacy API login testing. For UI login, use mobile OTP.</p>
+
+    <h3>Female Test Users</h3>
+    <table>
+      <tr><th>Name</th><th>Email</th><th>Mobile</th></tr>
+      <tr><td>Priya Sharma</td><td>priya@example.com</td><td>9000000001</td></tr>
+      <tr><td>Anjali Verma</td><td>anjali@example.com</td><td>9000000002</td></tr>
+      <tr><td>Neha Gupta</td><td>neha@example.com</td><td>9000000003</td></tr>
+      <tr><td>Megha Singh</td><td>megha@example.com</td><td>9000000007</td></tr>
+      <tr><td>Kavya Iyer</td><td>kavya@example.com</td><td>9000000008</td></tr>
+      <tr><td>Isha Kapoor</td><td>isha@example.com</td><td>9000000009</td></tr>
+      <tr><td>Ritika Jain</td><td>ritika@example.com</td><td>9000000010</td></tr>
+      <tr><td>Sneha Nair</td><td>sneha@example.com</td><td>9000000011</td></tr>
+      <tr><td>Aditi Rao</td><td>aditi@example.com</td><td>9000000012</td></tr>
+      <tr><td>Pooja Mehta</td><td>pooja@example.com</td><td>9000000013</td></tr>
+    </table>
+
+    <h3>Male Test Users</h3>
+    <table>
+      <tr><th>Name</th><th>Email</th><th>Mobile</th></tr>
+      <tr><td>Raj Patel</td><td>raj@example.com</td><td>9000000004</td></tr>
+      <tr><td>Arjun Kumar</td><td>arjun@example.com</td><td>9000000005</td></tr>
+      <tr><td>Vikram Singh</td><td>vikram@example.com</td><td>9000000006</td></tr>
+      <tr><td>Aditya Reddy</td><td>aditya@example.com</td><td>9000000014</td></tr>
+      <tr><td>Rohan Mishra</td><td>rohan@example.com</td><td>9000000015</td></tr>
+      <tr><td>Nikhil Joshi</td><td>nikhil@example.com</td><td>9000000016</td></tr>
+      <tr><td>Karan Malhotra</td><td>karan@example.com</td><td>9000000017</td></tr>
+      <tr><td>Sameer Khan</td><td>sameer@example.com</td><td>9000000018</td></tr>
+      <tr><td>Manav Shah</td><td>manav@example.com</td><td>9000000019</td></tr>
+      <tr><td>Dev Sharma</td><td>dev@example.com</td><td>9000000020</td></tr>
+    </table>
+  </section>
+
+  <section id="matching" class="page-break">
+    <h2>8. Matching Rules</h2>
+    <p>The match API returns compatible profiles based on gender preference:</p>
+    <ul>
+      <li>If logged in user is male and looking for female, API returns female profiles looking for male.</li>
+      <li>If logged in user is female and looking for male, API returns male profiles looking for female.</li>
+      <li>By default, the API returns 10 matches for testing.</li>
+      <li>Filters can apply age, location, and religion.</li>
+    </ul>
+
+    <h3>Expected Test Result</h3>
+    <table>
+      <tr><th>Login User</th><th>Expected Matches</th></tr>
+      <tr><td>Raj Patel</td><td>10 female profiles</td></tr>
+      <tr><td>Priya Sharma</td><td>10 male profiles</td></tr>
+    </table>
+  </section>
+
+  <section id="chat">
+    <h2>9. Realtime Chat and Offline Email</h2>
+    <h3>Realtime Chat</h3>
+    <ol>
+      <li>User opens a matched profile and clicks message.</li>
+      <li>Frontend calls <code>POST /api/messages/start/:profileId</code>.</li>
+      <li>Backend creates or reuses a conversation.</li>
+      <li>Messages page joins the Socket.IO conversation room.</li>
+      <li>New messages are broadcast with <code>message:new</code>.</li>
+    </ol>
+
+    <h3>Offline Email Notification</h3>
+    <p>If the recipient is not connected to Socket.IO, the backend sends an email notification with the message content.</p>
+    <pre>SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=your_email@gmail.com
+SMTP_PASS=your_app_password
+EMAIL_FROM=your_email@gmail.com</pre>
+
+    <div class="note">
+      If SMTP settings are empty, the backend logs the email notification in the server console instead of sending it.
+    </div>
+  </section>
+
+  <section id="frontend" class="page-break">
+    <h2>10. Frontend Pages</h2>
+    <table>
+      <tr><th>Route</th><th>Page</th><th>Description</th></tr>
+      <tr><td><code>/</code></td><td>Home</td><td>Landing page with footer links.</td></tr>
+      <tr><td><code>/register</code></td><td>Register</td><td>Create profile and mobile number.</td></tr>
+      <tr><td><code>/login</code></td><td>Login</td><td>Mobile OTP login.</td></tr>
+      <tr><td><code>/browse</code></td><td>Browse</td><td>Shows matched profiles.</td></tr>
+      <tr><td><code>/likes</code></td><td>Likes</td><td>Likes and views list.</td></tr>
+      <tr><td><code>/messages</code></td><td>Messages</td><td>Realtime chat UI.</td></tr>
+      <tr><td><code>/profile</code></td><td>Profile</td><td>Edit logged in user profile.</td></tr>
+      <tr><td><code>/info/:slug</code></td><td>Footer Page</td><td>Interactive content pages for footer menu.</td></tr>
+    </table>
+  </section>
+
+  <section id="api">
+    <h2>11. API Reference</h2>
+    <h3>Auth APIs</h3>
+    <table>
+      <tr><th>Method</th><th>Path</th><th>Purpose</th></tr>
+      <tr><td>POST</td><td><code>/api/auth/register</code></td><td>Create account and profile.</td></tr>
+      <tr><td>POST</td><td><code>/api/auth/send-otp</code></td><td>Generate OTP for registered mobile.</td></tr>
+      <tr><td>POST</td><td><code>/api/auth/verify-otp</code></td><td>Verify OTP and return JWT.</td></tr>
+      <tr><td>POST</td><td><code>/api/auth/login</code></td><td>Legacy email/password login for API testing.</td></tr>
+      <tr><td>GET</td><td><code>/api/auth/me</code></td><td>Return logged in user and profile.</td></tr>
+    </table>
+
+    <h3>Match APIs</h3>
+    <table>
+      <tr><th>Method</th><th>Path</th><th>Purpose</th></tr>
+      <tr><td>GET</td><td><code>/api/matches</code></td><td>List compatible matches.</td></tr>
+      <tr><td>POST</td><td><code>/api/matches/:profileId/like</code></td><td>Like a profile.</td></tr>
+      <tr><td>POST</td><td><code>/api/matches/:profileId/pass</code></td><td>Pass a profile.</td></tr>
+      <tr><td>GET</td><td><code>/api/matches/likes</code></td><td>List received likes.</td></tr>
+      <tr><td>GET</td><td><code>/api/matches/views</code></td><td>List profile viewers.</td></tr>
+    </table>
+
+    <h3>Message APIs</h3>
+    <table>
+      <tr><th>Method</th><th>Path</th><th>Purpose</th></tr>
+      <tr><td>POST</td><td><code>/api/messages/start/:profileId</code></td><td>Create or open conversation.</td></tr>
+      <tr><td>GET</td><td><code>/api/messages/conversations</code></td><td>List conversations.</td></tr>
+      <tr><td>GET</td><td><code>/api/messages/conversations/:conversationId</code></td><td>List messages.</td></tr>
+      <tr><td>POST</td><td><code>/api/messages/conversations/:conversationId</code></td><td>Send message.</td></tr>
+    </table>
+  </section>
+
+  <section id="troubleshooting" class="page-break">
+    <h2>12. Troubleshooting</h2>
+    <h3>CORS Error</h3>
+    <ul>
+      <li>Ensure backend is running on <code>http://127.0.0.1:5000</code>.</li>
+      <li>Ensure frontend origin is listed in <code>CLIENT_URL</code>.</li>
+      <li>Restart backend after changing <code>.env</code>.</li>
+    </ul>
+
+    <h3>Database Connection Fails</h3>
+    <ul>
+      <li>Confirm MySQL is running.</li>
+      <li>Confirm database <code>shadiDB</code> exists.</li>
+      <li>Check <code>DB_USER</code> and <code>DB_PASSWORD</code> in <code>.env</code>.</li>
+    </ul>
+
+    <h3>OTP Not Working</h3>
+    <ul>
+      <li>Use a registered mobile number.</li>
+      <li>Check Development OTP shown on login page.</li>
+      <li>OTP expires after 5 minutes.</li>
+    </ul>
+
+    <h3>No Matches Showing</h3>
+    <ul>
+      <li>Restart backend so seed users are inserted.</li>
+      <li>Log in with one of the seeded test mobile numbers.</li>
+      <li>Clear filters in Browse page.</li>
+    </ul>
+  </section>
+
+  <section id="production">
+    <h2>13. Production Checklist</h2>
+    <ul>
+      <li>Change <code>JWT_SECRET</code> to a strong private value.</li>
+      <li>Disable returning <code>devOtp</code> from <code>/api/auth/send-otp</code>.</li>
+      <li>Connect a real SMS provider for OTP delivery.</li>
+      <li>Configure SMTP credentials for offline email notification.</li>
+      <li>Use HTTPS for frontend and backend.</li>
+      <li>Move secrets out of committed files.</li>
+      <li>Add rate limiting for OTP and login APIs.</li>
+      <li>Add stronger validation for profile data and uploaded images.</li>
+      <li>Replace demo image URLs and seed data with production content.</li>
+      <li>Use migrations instead of <code>sequelize.sync({ alter: true })</code> for production database changes.</li>
+    </ul>
+    <p class="small">End of manual.</p>
+  </section>
+</body>
+</html>
