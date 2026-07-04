@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { Suspense, lazy, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
@@ -9,8 +9,9 @@ import Messages from './pages/Messages';
 import Profile from './pages/Profile';
 import Likes from './pages/Likes';
 import FooterPage from './pages/FooterPage';
-import AdminDashboard from './pages/AdminDashboard';
 import './App.css';
+
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 
 function AppLayout({ isLoggedIn, onLogout, onLoginSuccess }) {
   const location = useLocation();
@@ -21,32 +22,34 @@ function AppLayout({ isLoggedIn, onLogout, onLoginSuccess }) {
       {!isAdminRoute && <Navbar isLoggedIn={isLoggedIn} onLogout={onLogout} />}
 
       <main className="main-content">
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<Home isLoggedIn={isLoggedIn} />} />
-          <Route path="/register" element={<Register onLoginSuccess={onLoginSuccess} />} />
-          <Route path="/login" element={<Login onLoginSuccess={onLoginSuccess} />} />
-          <Route path="/info/:slug" element={<FooterPage />} />
-          <Route path="/admin" element={<AdminDashboard />} />
+        <Suspense fallback={<div className="route-loading">Loading...</div>}>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<Home isLoggedIn={isLoggedIn} />} />
+            <Route path="/register" element={<Register onLoginSuccess={onLoginSuccess} />} />
+            <Route path="/login" element={<Login onLoginSuccess={onLoginSuccess} />} />
+            <Route path="/info/:slug" element={<FooterPage />} />
+            <Route path="/admin" element={<AdminDashboard />} />
 
-          {/* Protected Routes */}
-          {isLoggedIn ? (
-            <>
-              <Route path="/browse" element={<Browse />} />
-              <Route path="/messages" element={<Messages />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/likes" element={<Likes />} />
-            </>
-          ) : (
-            <Route
-              path="/browse"
-              element={<Navigate to="/login" replace />}
-            />
-          )}
+            {/* Protected Routes */}
+            {isLoggedIn ? (
+              <>
+                <Route path="/browse" element={<Browse />} />
+                <Route path="/messages" element={<Messages />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/likes" element={<Likes />} />
+              </>
+            ) : (
+              <Route
+                path="/browse"
+                element={<Navigate to="/login" replace />}
+              />
+            )}
 
-          {/* Catch all */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+            {/* Catch all */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
       </main>
     </div>
   );
