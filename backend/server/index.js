@@ -12,6 +12,8 @@ dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
+let databaseReady = false;
+let databaseError = null;
 const allowedOrigins = (process.env.CLIENT_URL || 'http://127.0.0.1:5173,http://localhost:5173')
   .split(',')
   .map((origin) => origin.trim())
@@ -52,11 +54,21 @@ app.use(cors(corsOptions));
 app.use(express.json());
 
 app.get('/api/health', (req, res) => {
-  res.json({ ok: true, service: 'ShadiMatch API' });
+  res.json({
+    ok: true,
+    service: 'ShadiMatch API',
+    databaseReady,
+    databaseError,
+  });
 });
 
 app.get('/', (req, res) => {
-  res.json({ ok: true, service: 'ShadiMatch API' });
+  res.json({
+    ok: true,
+    service: 'ShadiMatch API',
+    databaseReady,
+    databaseError,
+  });
 });
 
 app.use('/api', apiRoutes);
@@ -70,15 +82,24 @@ registerSocketHandlers(io);
 
 const port = Number(process.env.PORT || 5000);
 
-try {
-  await sequelize.authenticate();
-  await sequelize.sync({ alter: true });
-  await seedDatabase();
+server.listen(port, () => {
+  console.log(`API running on port ${port}`);
+});
 
-  server.listen(port, () => {
-    console.log(`API running on http://127.0.0.1:${port}`);
-  });
-} catch (error) {
-  console.error('Failed to start API server:', error.message);
-  process.exit(1);
+async function initializeDatabase() {
+  try {
+    await sequelize.authenticate();
+    await sequelize.sync({ alter: true });
+    await seedDatabase();
+
+    databaseReady = true;
+    databaseError = null;
+    console.log('Database connected and synced');
+  } catch (error) {
+    databaseReady = false;
+    databaseError = error.message;
+    console.error('Database initialization failed:', error.message);
+  }
 }
+
+initializeDatabase();
