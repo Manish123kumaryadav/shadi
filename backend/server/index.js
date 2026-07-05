@@ -91,6 +91,18 @@ server.listen(port, () => {
 async function initializeDatabase() {
   try {
     await sequelize.authenticate();
+
+    if (process.env.RESET_DATABASE_ON_START === 'true') {
+      console.warn('RESET_DATABASE_ON_START is enabled. Rebuilding database schema.');
+      await sequelize.sync({ force: true });
+      await seedDatabase();
+
+      databaseReady = true;
+      databaseError = null;
+      console.log('Database reset, seeded, and synced');
+      return;
+    }
+
     try {
       await sequelize.sync();
     } catch (syncError) {
@@ -102,7 +114,7 @@ async function initializeDatabase() {
       const tableNames = tables.map((table) =>
         typeof table === 'string' ? table : table.tableName || table.name
       );
-      const hasUsersTable = tableNames.includes('Users');
+      const hasUsersTable = tableNames.some((tableName) => tableName?.toLowerCase() === 'users');
 
       if (!hasUsersTable) {
         console.warn('Users table is missing after sync failure. Rebuilding database schema.');
