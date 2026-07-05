@@ -91,7 +91,15 @@ server.listen(port, () => {
 async function initializeDatabase() {
   try {
     await sequelize.authenticate();
-    await sequelize.sync();
+    try {
+      await sequelize.sync();
+    } catch (syncError) {
+      const isDuplicateForeignKey = syncError.message?.includes('Duplicate foreign key constraint');
+      if (!isDuplicateForeignKey) throw syncError;
+
+      console.warn('Database sync skipped duplicate foreign key:', syncError.message);
+    }
+
     await seedDatabase();
 
     databaseReady = true;
