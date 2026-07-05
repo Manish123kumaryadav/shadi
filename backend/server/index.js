@@ -98,6 +98,16 @@ async function initializeDatabase() {
       if (!isDuplicateForeignKey) throw syncError;
 
       console.warn('Database sync skipped duplicate foreign key:', syncError.message);
+      const tables = await sequelize.getQueryInterface().showAllTables();
+      const tableNames = tables.map((table) =>
+        typeof table === 'string' ? table : table.tableName || table.name
+      );
+      const hasUsersTable = tableNames.includes('Users');
+
+      if (!hasUsersTable) {
+        console.warn('Users table is missing after sync failure. Rebuilding database schema.');
+        await sequelize.sync({ force: true });
+      }
     }
 
     await seedDatabase();
