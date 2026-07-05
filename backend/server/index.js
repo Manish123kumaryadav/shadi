@@ -92,46 +92,22 @@ async function initializeDatabase() {
   try {
     await sequelize.authenticate();
 
-    if (process.env.RESET_DATABASE_ON_START === 'true') {
-      console.warn('RESET_DATABASE_ON_START is enabled. Rebuilding database schema.');
-      await sequelize.sync({ force: true });
-      await seedDatabase();
-
-      databaseReady = true;
-      databaseError = null;
-      console.log('Database reset, seeded, and synced');
-      return;
-    }
-
-    try {
+    // Only create/update tables in local development
+    if (process.env.NODE_ENV !== 'production') {
       await sequelize.sync();
-    } catch (syncError) {
-      const isDuplicateForeignKey = syncError.message?.includes('Duplicate foreign key constraint');
-      if (!isDuplicateForeignKey) throw syncError;
-
-      console.warn('Database sync skipped duplicate foreign key:', syncError.message);
-      const tables = await sequelize.getQueryInterface().showAllTables();
-      const tableNames = tables.map((table) =>
-        typeof table === 'string' ? table : table.tableName || table.name
-      );
-      const hasUsersTable = tableNames.some((tableName) => tableName?.toLowerCase() === 'users');
-
-      if (!hasUsersTable) {
-        console.warn('Users table is missing after sync failure. Rebuilding database schema.');
-        await sequelize.sync({ force: true });
-      }
+      await seedDatabase();
     }
-
-    await seedDatabase();
 
     databaseReady = true;
     databaseError = null;
-    console.log('Database connected and synced');
+    console.log('Database connected');
   } catch (error) {
     databaseReady = false;
     databaseError = error.message;
     console.error('Database initialization failed:', error.message);
   }
 }
+
+initializeDatabase();
 
 initializeDatabase();
