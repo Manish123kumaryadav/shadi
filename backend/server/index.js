@@ -55,6 +55,10 @@ app.get('/api/health', (req, res) => {
   res.json({ ok: true, service: 'ShadiMatch API' });
 });
 
+app.get('/', (req, res) => {
+  res.json({ ok: true, service: 'ShadiMatch API' });
+});
+
 app.use('/api', apiRoutes);
 
 app.use((error, req, res, next) => {
