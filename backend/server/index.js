@@ -91,7 +91,7 @@ server.listen(port, () => {
 async function initializeDatabase() {
   try {
     await sequelize.authenticate();
-    await sequelize.sync({ alter: true });
+    await sequelize.sync();
     await seedDatabase();
 
     databaseReady = true;
