@@ -25,7 +25,9 @@ function isAllowedOrigin(origin) {
 
   try {
     const url = new URL(origin);
-    return ['localhost', '127.0.0.1', '::1'].includes(url.hostname);
+    if (['localhost', '127.0.0.1', '::1'].includes(url.hostname)) return true;
+    if (url.hostname.endsWith('.vercel.app')) return true;
+    return false;
   } catch (error) {
     return false;
   }
