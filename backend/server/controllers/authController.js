@@ -3,6 +3,8 @@ import jwt from 'jsonwebtoken';
 import { User, Profile, Photo } from '../models/index.js';
 import { formatProfile, inferGenderFromLookingFor } from '../utils.js';
 
+const otpFallbackStore = new Map();
+
 function signToken(user) {
   return jwt.sign({ id: user.id }, process.env.JWT_SECRET || 'dev-secret', {
     expiresIn: '7d',
@@ -89,16 +91,28 @@ export async function sendOtp(req, res) {
     }
 
     const otp = String(Math.floor(100000 + Math.random() * 900000));
-    await user.update({
-      otpCode: otp,
-      otpExpiresAt: new Date(Date.now() + 5 * 60 * 1000),
-    });
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+
+    try {
+      await user.update({
+        otpCode: otp,
+        otpExpiresAt: expiresAt,
+      });
+      otpFallbackStore.delete(mobile);
+    } catch (updateError) {
+      console.warn('Could not save OTP in database, using memory fallback:', updateError.message);
+      otpFallbackStore.set(mobile, {
+        otp,
+        expiresAt: expiresAt.getTime(),
+      });
+    }
 
     return res.json({
       message: 'OTP sent to registered mobile number',
       devOtp: otp,
     });
   } catch (error) {
+    console.error('Send OTP failed:', error);
     return res.status(500).json({ message: 'Could not send OTP' });
   }
 }
@@ -108,27 +122,38 @@ export async function verifyOtp(req, res) {
     const mobile = String(req.body.mobile || '').replace(/\D/g, '');
     const otp = String(req.body.otp || '').trim();
     const user = await User.findOne({ where: { mobile } });
+    const fallbackOtp = otpFallbackStore.get(mobile);
+    const fallbackMatches = fallbackOtp?.otp === otp;
+    const fallbackExpired = !fallbackOtp || fallbackOtp.expiresAt < Date.now();
 
-    if (!user || !user.otpCode || user.otpCode !== otp) {
+    if (!user || ((!user.otpCode || user.otpCode !== otp) && !fallbackMatches)) {
       return res.status(401).json({ message: 'Invalid OTP' });
     }
 
-    if (!user.otpExpiresAt || new Date(user.otpExpiresAt).getTime() < Date.now()) {
+    const databaseOtpExpired = !user.otpExpiresAt || new Date(user.otpExpiresAt).getTime() < Date.now();
+    if ((fallbackMatches && fallbackExpired) || (!fallbackMatches && databaseOtpExpired)) {
       return res.status(401).json({ message: 'OTP expired. Please request a new OTP.' });
     }
 
-    await user.update({
-      verified: true,
-      otpCode: null,
-      otpExpiresAt: null,
-      lastSeenAt: new Date(),
-    });
+    try {
+      await user.update({
+        verified: true,
+        otpCode: null,
+        otpExpiresAt: null,
+        lastSeenAt: new Date(),
+      });
+    } catch (updateError) {
+      console.warn('Could not clear OTP fields after verification:', updateError.message);
+    }
+
+    otpFallbackStore.delete(mobile);
 
     return res.json({
       token: signToken(user),
       user: { id: user.id, fullName: user.fullName, email: user.email, mobile: user.mobile },
     });
   } catch (error) {
+    console.error('OTP verification failed:', error);
     return res.status(500).json({ message: 'OTP verification failed' });
   }
 }
