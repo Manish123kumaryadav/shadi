@@ -21,9 +21,9 @@ const Navbar = ({ isLoggedIn, onLogout }) => {
     <nav className="navbar">
       <div className="navbar-container">
         {/* Logo */}
-        <Link to="/" className="navbar-logo">
+        <Link to="/" className="navbar-logo py-2">
           <Heart className="logo-icon" />
-          <span>ShadiMatch</span>
+          <span>ShaadiMatch</span>
         </Link>
 
         {/* Mobile Menu Button */}
