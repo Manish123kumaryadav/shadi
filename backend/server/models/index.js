@@ -46,7 +46,10 @@ Message.belongsTo(Conversation, { foreignKey: 'conversationId' });
 Message.belongsTo(User, { as: 'Sender', foreignKey: 'senderId' });
 ConversationMember.belongsTo(User, { foreignKey: 'userId' });
 ConversationMember.belongsTo(Conversation, { foreignKey: 'conversationId' });
-
+Message.belongsTo(Message, {
+  as: 'ReplyTo',
+  foreignKey: 'replyToMessageId',
+});
 export {
   sequelize,
   Role,
