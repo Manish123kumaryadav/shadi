@@ -50,6 +50,10 @@ Message.belongsTo(Message, {
   as: 'ReplyTo',
   foreignKey: 'replyToMessageId',
 });
+Message.belongsTo(Message, {
+  as: "ForwardedFrom",
+  foreignKey: "forwardedFromMessageId",
+});
 export {
   sequelize,
   Role,

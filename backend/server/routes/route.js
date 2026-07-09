@@ -22,8 +22,10 @@ import {
   unlikeProfile,
 } from '../controllers/matchController.js';
 import {
+  deleteMessageForEveryone,
   getConversations,
   getMessages,
+  reactMessage,
   sendMessage,
   startConversation,
 } from '../controllers/messageController.js';
@@ -73,6 +75,9 @@ router.get('/messages/conversations', authRequired, getConversations);
 router.get('/messages/conversations/:conversationId', authRequired, getMessages);
 router.post('/messages/conversations/:conversationId', authRequired, sendMessage);
 
+
+router.delete("/messages/:messageId/everyone", authRequired, deleteMessageForEveryone);
+router.post("/messages/:messageId/react", authRequired, reactMessage);
 router.get('/admin/report', authRequired, adminRequired, getAdminReport);
 router.get('/admin/sections/:sectionName', authRequired, adminRequired, getAdminSection);
 router.get('/admin/tables/:tableName', authRequired, adminRequired, getAdminTable);

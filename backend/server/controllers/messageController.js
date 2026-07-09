@@ -101,8 +101,7 @@ export async function getMessages(req, res) {
     where: { conversationId: req.params.conversationId, userId: req.user.id },
   });
 
-  if (!member)
-    return res.status(404).json({ message: "Conversation not found" });
+  if (!member) return res.status(404).json({ message: "Conversation not found" });
 
   const messages = await Message.findAll({
     where: { conversationId: req.params.conversationId },
@@ -117,45 +116,42 @@ export async function getMessages(req, res) {
     order: [["createdAt", "ASC"]],
   });
 
-  res.json(
-    messages.map((message) => ({
-      id: message.id,
-      text: message.body,
-      sender: message.senderId === req.user.id ? "me" : "other",
-      senderId: message.senderId,
-      timestamp: message.createdAt,
-
-      replyTo: message.ReplyTo
-        ? {
-            id: message.ReplyTo.id,
-            text: message.ReplyTo.body,
-            senderId: message.ReplyTo.senderId,
-            sender: message.ReplyTo.senderId === req.user.id ? "me" : "other",
-            senderName: message.ReplyTo.Sender?.fullName || "Member",
-          }
-        : null,
-    })),
-  );
+  res.json(messages.map((message) => ({
+    id: message.id,
+    text: message.deletedForEveryone ? "This message was deleted" : message.body,
+    sender: message.senderId === req.user.id ? "me" : "other",
+    senderId: message.senderId,
+    timestamp: message.createdAt,
+    deletedForEveryone: message.deletedForEveryone,
+    forwarded: Boolean(message.forwardedFromMessageId),
+    reactions: message.reactions || [],
+    replyTo: message.ReplyTo
+      ? {
+          id: message.ReplyTo.id,
+          text: message.ReplyTo.deletedForEveryone
+            ? "This message was deleted"
+            : message.ReplyTo.body,
+          senderId: message.ReplyTo.senderId,
+          sender: message.ReplyTo.senderId === req.user.id ? "me" : "other",
+          senderName: message.ReplyTo.Sender?.fullName || "Member",
+        }
+      : null,
+  })));
 }
-
 export async function sendMessage(req, res) {
   const member = await ConversationMember.findOne({
     where: { conversationId: req.params.conversationId, userId: req.user.id },
   });
 
-  if (!member)
-    return res.status(404).json({ message: "Conversation not found" });
-  if (!req.body.message?.trim())
-    return res.status(400).json({ message: "Message is required" });
-
-  const replyToMessageId = req.body.replyToMessageId || null;
+  if (!member) return res.status(404).json({ message: "Conversation not found" });
+  if (!req.body.message?.trim()) return res.status(400).json({ message: "Message is required" });
 
   let replyToMessage = null;
 
-  if (replyToMessageId) {
+  if (req.body.replyToMessageId) {
     replyToMessage = await Message.findOne({
       where: {
-        id: replyToMessageId,
+        id: req.body.replyToMessageId,
         conversationId: req.params.conversationId,
       },
     });
@@ -169,12 +165,13 @@ export async function sendMessage(req, res) {
     conversationId: req.params.conversationId,
     senderId: req.user.id,
     body: req.body.message.trim(),
-    replyToMessageId,
+    replyToMessageId: req.body.replyToMessageId || null,
+    forwardedFromMessageId: req.body.forwardedFromMessageId || null,
   });
 
   await Conversation.update(
     { updatedAt: new Date() },
-    { where: { id: req.params.conversationId }, silent: false },
+    { where: { id: req.params.conversationId }, silent: false }
   );
 
   const payload = {
@@ -183,39 +180,66 @@ export async function sendMessage(req, res) {
     text: message.body,
     senderId: req.user.id,
     timestamp: message.createdAt,
+    forwarded: Boolean(message.forwardedFromMessageId),
+    reactions: [],
     replyTo: replyToMessage
       ? {
           id: replyToMessage.id,
           text: replyToMessage.body,
           senderId: replyToMessage.senderId,
           sender: replyToMessage.senderId === req.user.id ? "me" : "other",
+          senderName: req.user.fullName,
         }
       : null,
   };
 
-  req.app
-    .get("io")
-    ?.to(`conversation:${req.params.conversationId}`)
-    .emit("message:new", payload);
+  req.app.get("io")?.to(`conversation:${req.params.conversationId}`).emit("message:new", payload);
 
-  const recipientMember = await ConversationMember.findOne({
-    where: {
-      conversationId: req.params.conversationId,
-      userId: { [Op.ne]: req.user.id },
-    },
-    include: [User],
+  res.status(201).json(payload);
+}
+
+export async function deleteMessageForEveryone(req, res) {
+  const message = await Message.findByPk(req.params.messageId);
+
+  if (!message) return res.status(404).json({ message: "Message not found" });
+  if (message.senderId !== req.user.id) {
+    return res.status(403).json({ message: "Not allowed" });
+  }
+
+  await message.update({
+    body: "",
+    deletedForEveryone: true,
   });
 
-  if (recipientMember?.User && !isUserOnline(recipientMember.User.id)) {
-    sendOfflineMessageEmail({
-      to: recipientMember.User.email,
-      recipientName: recipientMember.User.fullName,
-      senderName: req.user.fullName,
-      message: message.body,
-    }).catch((error) => {
-      console.error("Offline email notification failed:", error.message);
+  req.app.get("io")?.to(`conversation:${message.conversationId}`).emit("message:deleted", {
+    messageId: message.id,
+  });
+
+  res.json({ success: true });
+}
+
+export async function reactMessage(req, res) {
+  const { emoji } = req.body;
+  const message = await Message.findByPk(req.params.messageId);
+
+  if (!message) return res.status(404).json({ message: "Message not found" });
+
+  let reactions = message.reactions || [];
+  reactions = reactions.filter((item) => item.userId !== req.user.id);
+
+  if (emoji) {
+    reactions.push({
+      userId: req.user.id,
+      emoji,
     });
   }
 
-  res.status(201).json(payload);
+  await message.update({ reactions });
+
+  req.app.get("io")?.to(`conversation:${message.conversationId}`).emit("message:reaction", {
+    messageId: message.id,
+    reactions,
+  });
+
+  res.json({ success: true, reactions });
 }
