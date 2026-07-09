@@ -34,7 +34,7 @@ const Messages = () => {
   const remoteAudioRef = useRef(null);
   const ringRef = useRef({ audioContext: null, oscillator: null, timer: null });
   const [replyMessage, setReplyMessage] = useState(null);
-
+const [touchStartX, setTouchStartX] = useState(null);
   const [selectedActionMessage, setSelectedActionMessage] = useState(null);
   const [highlightedMessageId, setHighlightedMessageId] = useState(null);
   const messageRefs = useRef({});
@@ -622,94 +622,101 @@ const handleReaction = async (message, emoji) => {
               {/* Messages */}
             <div className="messages-list">
   {messages.map((message) => (
-    <div
-      key={message.id}
-      ref={(el) => (messageRefs.current[message.id] = el)}
-      className={`message ${message.sender} ${
-        highlightedMessageId === message.id ? "highlight-message" : ""
-      }`}
-      onDoubleClick={() => handleReply(message)}
-      onContextMenu={(e) => {
-        e.preventDefault();
-        setSelectedActionMessage(message);
-      }}
-    >
-      <div className="message-content">
-        {message.forwarded && (
-          <div className="forwarded-label">Forwarded</div>
-        )}
+   <div
+  key={message.id}
+  ref={(el) => (messageRefs.current[message.id] = el)}
+  className={`message ${message.sender} ${
+    highlightedMessageId === message.id ? "highlight-message" : ""
+  }`}
+  onTouchStart={(e) => setTouchStartX(e.touches[0].clientX)}
+  onTouchEnd={(e) => {
+    if (touchStartX === null) return;
 
-        {message.replyTo && (
-          <div
-            className="reply-box"
-            onClick={() => scrollToMessage(message.replyTo.id)}
-          >
-            <div className="reply-line"></div>
+    const diff = e.changedTouches[0].clientX - touchStartX;
 
-            <div className="reply-body">
-              <div className="reply-name">
-                {message.replyTo.sender === "me"
-                  ? "You"
-                  : message.replyTo.senderName || selectedConversation.name}
-              </div>
+    if (diff > 70) {
+      handleReply(message);
+    }
 
-              <div className="reply-text">{message.replyTo.text}</div>
-            </div>
+    setTouchStartX(null);
+  }}
+>
+  <div className="message-content">
+    {!message.deletedForEveryone && (
+      <button
+        className="message-menu-btn"
+        onClick={(e) => {
+          e.stopPropagation();
+          setSelectedActionMessage(
+            selectedActionMessage?.id === message.id ? null : message
+          );
+        }}
+      >
+        <MoreVertical size={16} />
+      </button>
+    )}
+
+    {message.forwarded && (
+      <div className="forwarded-label">Forwarded</div>
+    )}
+
+    {message.replyTo && (
+      <div
+        className="reply-box"
+        onClick={() => scrollToMessage(message.replyTo.id)}
+      >
+        <div className="reply-line"></div>
+
+        <div className="reply-body">
+          <div className="reply-name">
+            {message.replyTo.sender === "me"
+              ? "You"
+              : message.replyTo.senderName || selectedConversation.name}
           </div>
-        )}
 
-        <p className={message.deletedForEveryone ? "deleted-text" : ""}>
-          {message.text}
-        </p>
+          <div className="reply-text">{message.replyTo.text}</div>
+        </div>
+      </div>
+    )}
 
-        {message.reactions?.length > 0 && (
-          <div className="message-reactions">
-            {message.reactions.map((reaction, index) => (
-              <span key={index}>{reaction.emoji}</span>
-            ))}
-          </div>
-        )}
+    <p className={message?.deletedForEveryone ? "deleted-text" : ""}>
+      {message.text}
+    </p>
 
-        <div className="message-footer">
-          <span className="message-time">
-            {formatTime(message.timestamp)}
-          </span>
+    {message.reactions?.length > 0 && (
+      <div className="message-reactions">
+        {message.reactions.map((reaction, index) => (
+          <span key={index}>{reaction.emoji}</span>
+        ))}
+      </div>
+    )}
 
-          {!message.deletedForEveryone && (
-            <button
-              className="reply-btn"
-              onClick={() => handleReply(message)}
-            >
-              Reply
+    <div className="message-footer">
+      <span className="message-time">{formatTime(message.timestamp)}</span>
+    </div>
+
+    {selectedActionMessage?.id === message.id && (
+      <div className="message-action-menu">
+        <button onClick={() => handleReply(message)}>Reply</button>
+        <button onClick={() => handleForward(message)}>Forward</button>
+
+        <div className="reaction-row">
+          {["❤️", "😂", "👍", "😮", "😢", "🙏"].map((emoji) => (
+            <button key={emoji} onClick={() => handleReaction(message, emoji)}>
+              {emoji}
             </button>
-          )}
+          ))}
         </div>
 
-        {selectedActionMessage?.id === message.id && (
-          <div className="message-action-menu">
-            <button onClick={() => handleReply(message)}>Reply</button>
-            <button onClick={() => handleForward(message)}>Forward</button>
-
-            <div className="reaction-row">
-              {["❤️", "😂", "👍", "😮", "😢", "🙏"].map((emoji) => (
-                <button
-                  key={emoji}
-                  onClick={() => handleReaction(message, emoji)}
-                >
-                  {emoji}
-                </button>
-              ))}
-            </div>
-
-            {message.sender === "me" && (
-              <button onClick={() => handleDeleteForEveryone(message)}>
-                Delete for Everyone
-              </button>
-            )}
-          </div>
+        {message.sender === "me" && (
+          <button onClick={() => handleDeleteForEveryone(message)}>
+            Delete for Everyone
+          </button>
         )}
       </div>
-    </div>
+    )}
+  </div>
+</div>
   ))}
 </div>
   {replyMessage && (
