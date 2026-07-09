@@ -1,11 +1,20 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { useLocation } from 'react-router-dom';
-import { MoreVertical, Paperclip, Phone, PhoneCall, PhoneOff, Send, Smile, Video } from 'lucide-react';
-import { messageService, socketService } from '../services/api';
-import './Messages.css';
-
+import React, { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
+import {
+  MoreVertical,
+  Paperclip,
+  Phone,
+  PhoneCall,
+  PhoneOff,
+  Send,
+  Smile,
+  Video,
+} from "lucide-react";
+import { messageService, socketService } from "../services/api";
+import "./Messages.css";
+import EmojiPicker from "emoji-picker-react";
 const rtcConfig = {
-  iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+  iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
 };
 
 const Messages = () => {
@@ -13,24 +22,31 @@ const Messages = () => {
   const [conversations, setConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [messages, setMessages] = useState([]);
-  const [messageText, setMessageText] = useState('');
+  const [messageText, setMessageText] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [callState, setCallState] = useState('idle');
+  const [callState, setCallState] = useState("idle");
   const [callInfo, setCallInfo] = useState(null);
-  const [callError, setCallError] = useState('');
-
+  const [callError, setCallError] = useState("");
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const peerRef = useRef(null);
   const localStreamRef = useRef(null);
   const pendingCandidatesRef = useRef([]);
   const remoteAudioRef = useRef(null);
   const ringRef = useRef({ audioContext: null, oscillator: null, timer: null });
+  const [replyMessage, setReplyMessage] = useState(null);
 
+  const [selectedActionMessage, setSelectedActionMessage] = useState(null);
+  const [highlightedMessageId, setHighlightedMessageId] = useState(null);
+  const messageRefs = useRef({});
   const formatTime = (value) => {
-    if (!value) return '';
-    return new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    if (!value) return "";
+    return new Date(value).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
-  const currentUser = () => JSON.parse(localStorage.getItem('user') || '{}');
+  const currentUser = () => JSON.parse(localStorage.getItem("user") || "{}");
 
   const stopLocalStream = () => {
     localStreamRef.current?.getTracks().forEach((track) => track.stop());
@@ -60,7 +76,7 @@ const Messages = () => {
       const oscillator = audioContext.createOscillator();
       const gain = audioContext.createGain();
 
-      oscillator.type = 'sine';
+      oscillator.type = "sine";
       oscillator.frequency.value = 720;
       gain.gain.value = 0;
 
@@ -88,6 +104,9 @@ const Messages = () => {
     }
   };
 
+  const onEmojiClick = (emojiData) => {
+    setMessageText((prev) => prev + emojiData.emoji);
+  };
   const resetCall = () => {
     peerRef.current?.close();
     peerRef.current = null;
@@ -99,7 +118,7 @@ const Messages = () => {
       remoteAudioRef.current.srcObject = null;
     }
 
-    setCallState('idle');
+    setCallState("idle");
     setCallInfo(null);
   };
 
@@ -107,7 +126,7 @@ const Messages = () => {
     const socket = socketService.getSocket();
 
     if (notifyPeer && callInfo?.conversationId && callInfo?.peerUserId) {
-      socket?.emit('call:end', {
+      socket?.emit("call:end", {
         conversationId: callInfo.conversationId,
         toUserId: callInfo.peerUserId,
         callId: callInfo.callId,
@@ -124,7 +143,7 @@ const Messages = () => {
     peer.onicecandidate = (event) => {
       if (!event.candidate) return;
 
-      socket?.emit('call:ice-candidate', {
+      socket?.emit("call:ice-candidate", {
         conversationId,
         toUserId: peerUserId,
         callId,
@@ -138,11 +157,11 @@ const Messages = () => {
         remoteAudioRef.current.play().catch(() => {});
       }
       stopRingTone();
-      setCallState('connected');
+      setCallState("connected");
     };
 
     peer.onconnectionstatechange = () => {
-      if (['failed', 'closed', 'disconnected'].includes(peer.connectionState)) {
+      if (["failed", "closed", "disconnected"].includes(peer.connectionState)) {
         resetCall();
       }
     };
@@ -155,13 +174,69 @@ const Messages = () => {
     return peer;
   };
 
+  const scrollToMessage = (id) => {
+  messageRefs.current[id]?.scrollIntoView({
+    behavior: "smooth",
+    block: "center",
+  });
+
+  setHighlightedMessageId(id);
+
+  setTimeout(() => {
+    setHighlightedMessageId(null);
+  }, 2000);
+};
+
+const handleReply = (message) => {
+  setReplyMessage(message);
+  setSelectedActionMessage(null);
+};
+
+const handleDeleteForEveryone = async (message) => {
+  await messageService.deleteForEveryone(message.id);
+
+  setMessages((prev) =>
+    prev.map((item) =>
+      item.id === message.id
+        ? { ...item, text: "This message was deleted", deletedForEveryone: true }
+        : item
+    )
+  );
+
+  setSelectedActionMessage(null);
+};
+
+const handleForward = async (message) => {
+  await messageService.sendMessage(
+    selectedConversation.id,
+    message.text,
+    null,
+    message.id
+  );
+
+  setSelectedActionMessage(null);
+};
+
+const handleReaction = async (message, emoji) => {
+  const response = await messageService.reactMessage(message.id, emoji);
+
+  setMessages((prev) =>
+    prev.map((item) =>
+      item.id === message.id
+        ? { ...item, reactions: response.data.reactions }
+        : item
+    )
+  );
+
+  setSelectedActionMessage(null);
+};
   const loadMessages = async (conversation) => {
     setSelectedConversation(conversation);
     const response = await messageService.getMessages(conversation.id);
     setMessages(response.data);
 
     const socket = socketService.connect();
-    socket?.emit('conversation:join', conversation.id);
+    socket?.emit("conversation:join", conversation.id);
   };
 
   useEffect(() => {
@@ -171,7 +246,10 @@ const Messages = () => {
         const response = await messageService.getConversations();
         setConversations(response.data);
 
-        const target = response.data.find((item) => item.id === location.state?.conversationId) || response.data[0];
+        const target =
+          response.data.find(
+            (item) => item.id === location.state?.conversationId,
+          ) || response.data[0];
         if (target) await loadMessages(target);
       } finally {
         setIsLoading(false);
@@ -193,15 +271,19 @@ const Messages = () => {
           {
             id: message.id,
             text: message.text,
-            sender: message.senderId === JSON.parse(localStorage.getItem('user') || '{}').id ? 'me' : 'other',
+            sender:
+              message.senderId ===
+              JSON.parse(localStorage.getItem("user") || "{}").id
+                ? "me"
+                : "other",
             timestamp: message.timestamp,
           },
         ];
       });
     };
 
-    socket.on('message:new', onNewMessage);
-    return () => socket.off('message:new', onNewMessage);
+    socket.on("message:new", onNewMessage);
+    return () => socket.off("message:new", onNewMessage);
   }, []);
 
   useEffect(() => {
@@ -219,19 +301,29 @@ const Messages = () => {
       await peerRef.current.addIceCandidate(new RTCIceCandidate(candidate));
     };
 
-    const onIncomingCall = ({ callId, conversationId, fromUserId, fromName, offer }) => {
-      if (callState !== 'idle') {
-        socket.emit('call:reject', { conversationId, toUserId: fromUserId, callId });
+    const onIncomingCall = ({
+      callId,
+      conversationId,
+      fromUserId,
+      fromName,
+      offer,
+    }) => {
+      if (callState !== "idle") {
+        socket.emit("call:reject", {
+          conversationId,
+          toUserId: fromUserId,
+          callId,
+        });
         return;
       }
 
-      setCallError('');
-      setCallState('incoming');
+      setCallError("");
+      setCallState("incoming");
       setCallInfo({
         callId,
         conversationId,
         peerUserId: fromUserId,
-        peerName: fromName || 'Partner',
+        peerName: fromName || "Partner",
         offer,
       });
       startRingTone();
@@ -240,9 +332,11 @@ const Messages = () => {
     const onCallAnswer = async ({ callId, answer }) => {
       if (callInfo?.callId !== callId || !peerRef.current) return;
 
-      await peerRef.current.setRemoteDescription(new RTCSessionDescription(answer));
+      await peerRef.current.setRemoteDescription(
+        new RTCSessionDescription(answer),
+      );
       stopRingTone();
-      setCallState('connected');
+      setCallState("connected");
     };
 
     const onIceCandidate = async ({ callId, candidate }) => {
@@ -252,7 +346,7 @@ const Messages = () => {
 
     const onRejected = ({ callId }) => {
       if (callInfo?.callId !== callId) return;
-      setCallError('Call declined');
+      setCallError("Call declined");
       resetCall();
     };
 
@@ -261,31 +355,34 @@ const Messages = () => {
       resetCall();
     };
 
-    socket.on('call:incoming', onIncomingCall);
-    socket.on('call:answer', onCallAnswer);
-    socket.on('call:ice-candidate', onIceCandidate);
-    socket.on('call:rejected', onRejected);
-    socket.on('call:ended', onEnded);
+    socket.on("call:incoming", onIncomingCall);
+    socket.on("call:answer", onCallAnswer);
+    socket.on("call:ice-candidate", onIceCandidate);
+    socket.on("call:rejected", onRejected);
+    socket.on("call:ended", onEnded);
 
     return () => {
-      socket.off('call:incoming', onIncomingCall);
-      socket.off('call:answer', onCallAnswer);
-      socket.off('call:ice-candidate', onIceCandidate);
-      socket.off('call:rejected', onRejected);
-      socket.off('call:ended', onEnded);
+      socket.off("call:incoming", onIncomingCall);
+      socket.off("call:answer", onCallAnswer);
+      socket.off("call:ice-candidate", onIceCandidate);
+      socket.off("call:rejected", onRejected);
+      socket.off("call:ended", onEnded);
     };
   }, [callInfo, callState]);
 
   useEffect(() => () => resetCall(), []);
 
   const startAudioCall = async () => {
-    if (!selectedConversation?.userId || callState !== 'idle') return;
+    if (!selectedConversation?.userId || callState !== "idle") return;
 
     try {
-      setCallError('');
+      setCallError("");
       const socket = socketService.connect();
-      const callId = `${Date.now()}-${currentUser().id || 'me'}`;
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      const callId = `${Date.now()}-${currentUser().id || "me"}`;
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: false,
+      });
       localStreamRef.current = stream;
 
       const nextCallInfo = {
@@ -296,21 +393,25 @@ const Messages = () => {
       };
 
       setCallInfo(nextCallInfo);
-      setCallState('calling');
+      setCallState("calling");
       startRingTone();
 
-      const peer = createPeer(selectedConversation.id, selectedConversation.userId, callId);
+      const peer = createPeer(
+        selectedConversation.id,
+        selectedConversation.userId,
+        callId,
+      );
       const offer = await peer.createOffer();
       await peer.setLocalDescription(offer);
 
-      socket?.emit('call:offer', {
+      socket?.emit("call:offer", {
         conversationId: selectedConversation.id,
         toUserId: selectedConversation.userId,
         callId,
         offer,
       });
     } catch {
-      setCallError('Microphone permission is required for audio call');
+      setCallError("Microphone permission is required for audio call");
       resetCall();
     }
   };
@@ -319,14 +420,23 @@ const Messages = () => {
     if (!callInfo?.offer) return;
 
     try {
-      setCallError('');
+      setCallError("");
       const socket = socketService.connect();
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: false,
+      });
       localStreamRef.current = stream;
       stopRingTone();
 
-      const peer = createPeer(callInfo.conversationId, callInfo.peerUserId, callInfo.callId);
-      await peer.setRemoteDescription(new RTCSessionDescription(callInfo.offer));
+      const peer = createPeer(
+        callInfo.conversationId,
+        callInfo.peerUserId,
+        callInfo.callId,
+      );
+      await peer.setRemoteDescription(
+        new RTCSessionDescription(callInfo.offer),
+      );
 
       for (const candidate of pendingCandidatesRef.current) {
         await peer.addIceCandidate(new RTCIceCandidate(candidate));
@@ -336,17 +446,17 @@ const Messages = () => {
       const answer = await peer.createAnswer();
       await peer.setLocalDescription(answer);
 
-      socket?.emit('call:answer', {
+      socket?.emit("call:answer", {
         conversationId: callInfo.conversationId,
         toUserId: callInfo.peerUserId,
         callId: callInfo.callId,
         answer,
       });
 
-      setCallState('connected');
+      setCallState("connected");
       stopRingTone();
     } catch {
-      setCallError('Could not start microphone');
+      setCallError("Could not start microphone");
       endCall(true);
     }
   };
@@ -355,7 +465,7 @@ const Messages = () => {
     const socket = socketService.getSocket();
 
     if (callInfo) {
-      socket?.emit('call:reject', {
+      socket?.emit("call:reject", {
         conversationId: callInfo.conversationId,
         toUserId: callInfo.peerUserId,
         callId: callInfo.callId,
@@ -366,12 +476,18 @@ const Messages = () => {
   };
 
   const handleSendMessage = async () => {
-    if (messageText.trim()) {
-      if (!selectedConversation) return;
-      await messageService.sendMessage(selectedConversation.id, messageText);
-      setMessageText('');
-    }
-  };
+  if (!messageText.trim()) return;
+  if (!selectedConversation) return;
+
+  await messageService.sendMessage(
+    selectedConversation.id,
+    messageText,
+    replyMessage?.id || null
+  );
+
+  setMessageText("");
+  setReplyMessage(null);
+};
 
   const handleSelectConversation = async (conversation) => {
     await loadMessages(conversation);
@@ -392,22 +508,28 @@ const Messages = () => {
           </div>
 
           <div className="conversations">
-            {isLoading && <p className="text-muted">Loading conversations...</p>}
+            {isLoading && (
+              <p className="text-muted">Loading conversations...</p>
+            )}
             {conversations.map((conversation) => (
               <div
                 key={conversation.id}
-                className={`conversation-item ${selectedConversation?.id === conversation.id ? 'active' : ''}`}
+                className={`conversation-item ${selectedConversation?.id === conversation.id ? "active" : ""}`}
                 onClick={() => handleSelectConversation(conversation)}
               >
                 <div className="conversation-avatar">
                   <img src={conversation.avatar} alt={conversation.name} />
-                  {conversation.online && <div className="online-indicator"></div>}
+                  {conversation.online && (
+                    <div className="online-indicator"></div>
+                  )}
                 </div>
 
                 <div className="conversation-info">
                   <h4>{conversation.name}</h4>
                   <p>{conversation.lastMessage}</p>
-                  <span className="timestamp">{formatTime(conversation.timestamp)}</span>
+                  <span className="timestamp">
+                    {formatTime(conversation.timestamp)}
+                  </span>
                 </div>
 
                 {conversation.unread > 0 && (
@@ -425,17 +547,22 @@ const Messages = () => {
               {/* Chat Header */}
               <div className="chat-header">
                 <div className="chat-user-info">
-                  <img src={selectedConversation.avatar} alt={selectedConversation.name} />
+                  <img
+                    src={selectedConversation.avatar}
+                    alt={selectedConversation.name}
+                  />
                   <div>
                     <h3>{selectedConversation.name}</h3>
-                    <p>{selectedConversation.online ? 'Active now' : 'Offline'}</p>
+                    <p>
+                      {selectedConversation.online ? "Active now" : "Offline"}
+                    </p>
                   </div>
                 </div>
                 <div className="chat-actions">
                   <button
                     className="icon-btn"
                     onClick={startAudioCall}
-                    disabled={callState !== 'idle'}
+                    disabled={callState !== "idle"}
                     title="Start audio call"
                   >
                     <Phone size={20} />
@@ -449,30 +576,40 @@ const Messages = () => {
                 </div>
               </div>
 
-              {callState !== 'idle' && callInfo && (
+              {callState !== "idle" && callInfo && (
                 <div className={`call-panel ${callState}`}>
                   <audio ref={remoteAudioRef} autoPlay />
                   <div>
                     <p className="call-label">
-                      {callState === 'incoming'
-                        ? 'Incoming audio call'
-                        : callState === 'calling'
-                          ? 'Calling'
-                          : 'Audio call'}
+                      {callState === "incoming"
+                        ? "Incoming audio call"
+                        : callState === "calling"
+                          ? "Calling"
+                          : "Audio call"}
                     </p>
                     <h4>{callInfo.peerName}</h4>
                   </div>
 
                   <div className="call-controls">
-                    {callState === 'incoming' && (
-                      <button className="call-btn accept" onClick={acceptAudioCall} title="Accept call">
+                    {callState === "incoming" && (
+                      <button
+                        className="call-btn accept"
+                        onClick={acceptAudioCall}
+                        title="Accept call"
+                      >
                         <PhoneCall size={20} />
                       </button>
                     )}
                     <button
                       className="call-btn end"
-                      onClick={callState === 'incoming' ? rejectAudioCall : () => endCall(true)}
-                      title={callState === 'incoming' ? 'Decline call' : 'End call'}
+                      onClick={
+                        callState === "incoming"
+                          ? rejectAudioCall
+                          : () => endCall(true)
+                      }
+                      title={
+                        callState === "incoming" ? "Decline call" : "End call"
+                      }
                     >
                       <PhoneOff size={20} />
                     </button>
@@ -483,19 +620,116 @@ const Messages = () => {
               {callError && <div className="call-error">{callError}</div>}
 
               {/* Messages */}
-              <div className="messages-list">
-                {messages.map((message) => (
-                  <div key={message.id} className={`message ${message.sender}`}>
-                    <div className="message-content">
-                      <p>{message.text}</p>
-                      <span className="message-time">{formatTime(message.timestamp)}</span>
-                    </div>
-                  </div>
-                ))}
+            <div className="messages-list">
+  {messages.map((message) => (
+    <div
+      key={message.id}
+      ref={(el) => (messageRefs.current[message.id] = el)}
+      className={`message ${message.sender} ${
+        highlightedMessageId === message.id ? "highlight-message" : ""
+      }`}
+      onDoubleClick={() => handleReply(message)}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        setSelectedActionMessage(message);
+      }}
+    >
+      <div className="message-content">
+        {message.forwarded && (
+          <div className="forwarded-label">Forwarded</div>
+        )}
+
+        {message.replyTo && (
+          <div
+            className="reply-box"
+            onClick={() => scrollToMessage(message.replyTo.id)}
+          >
+            <div className="reply-line"></div>
+
+            <div className="reply-body">
+              <div className="reply-name">
+                {message.replyTo.sender === "me"
+                  ? "You"
+                  : message.replyTo.senderName || selectedConversation.name}
               </div>
 
+              <div className="reply-text">{message.replyTo.text}</div>
+            </div>
+          </div>
+        )}
+
+        <p className={message.deletedForEveryone ? "deleted-text" : ""}>
+          {message.text}
+        </p>
+
+        {message.reactions?.length > 0 && (
+          <div className="message-reactions">
+            {message.reactions.map((reaction, index) => (
+              <span key={index}>{reaction.emoji}</span>
+            ))}
+          </div>
+        )}
+
+        <div className="message-footer">
+          <span className="message-time">
+            {formatTime(message.timestamp)}
+          </span>
+
+          {!message.deletedForEveryone && (
+            <button
+              className="reply-btn"
+              onClick={() => handleReply(message)}
+            >
+              Reply
+            </button>
+          )}
+        </div>
+
+        {selectedActionMessage?.id === message.id && (
+          <div className="message-action-menu">
+            <button onClick={() => handleReply(message)}>Reply</button>
+            <button onClick={() => handleForward(message)}>Forward</button>
+
+            <div className="reaction-row">
+              {["❤️", "😂", "👍", "😮", "😢", "🙏"].map((emoji) => (
+                <button
+                  key={emoji}
+                  onClick={() => handleReaction(message, emoji)}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+
+            {message.sender === "me" && (
+              <button onClick={() => handleDeleteForEveryone(message)}>
+                Delete for Everyone
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  ))}
+</div>
+  {replyMessage && (
+                  <div className="reply-preview-box">
+                    <div>
+                      <strong>
+                        Replying to{" "}
+                        {replyMessage.sender === "me"
+                          ? "yourself"
+                          : selectedConversation.name}
+                      </strong>
+                      <p>{replyMessage.text}</p>
+                    </div>
+
+                    <button onClick={() => setReplyMessage(null)}>×</button>
+                  </div>
+                )}
               {/* Message Input */}
               <div className="message-input-area">
+              
                 <button className="input-icon-btn">
                   <Paperclip size={20} />
                 </button>
@@ -505,12 +739,28 @@ const Messages = () => {
                   placeholder="Type a message..."
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                  onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
                 />
 
-                <button className="input-icon-btn">
-                  <Smile size={20} />
-                </button>
+                <div className="emoji-wrapper">
+                  <button
+                    className="input-icon-btn"
+                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                  >
+                    <Smile size={20} />
+                  </button>
+
+                  {showEmojiPicker && (
+                    <div className="emoji-picker">
+                      <EmojiPicker
+                        onEmojiClick={onEmojiClick}
+                        lazyLoadEmojis
+                        width={320}
+                        height={380}
+                      />
+                    </div>
+                  )}
+                </div>
 
                 <button
                   className="send-btn"
