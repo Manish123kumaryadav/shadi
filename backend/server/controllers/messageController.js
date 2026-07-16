@@ -154,6 +154,7 @@ export async function sendMessage(req, res) {
         id: req.body.replyToMessageId,
         conversationId: req.params.conversationId,
       },
+      include: [{ model: User, as: "Sender" }],
     });
 
     if (!replyToMessage) {
@@ -185,10 +186,12 @@ export async function sendMessage(req, res) {
     replyTo: replyToMessage
       ? {
           id: replyToMessage.id,
-          text: replyToMessage.body,
+          text: replyToMessage.deletedForEveryone
+            ? "This message was deleted"
+            : replyToMessage.body,
           senderId: replyToMessage.senderId,
           sender: replyToMessage.senderId === req.user.id ? "me" : "other",
-          senderName: req.user.fullName,
+          senderName: replyToMessage.Sender?.fullName || "Member",
         }
       : null,
   };

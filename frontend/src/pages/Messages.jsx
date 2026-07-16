@@ -6,9 +6,11 @@ import {
   Phone,
   PhoneCall,
   PhoneOff,
+  Reply,
   Send,
   Smile,
   Video,
+  X,
 } from "lucide-react";
 import { messageService, socketService } from "../services/api";
 import "./Messages.css";
@@ -33,8 +35,9 @@ const Messages = () => {
   const pendingCandidatesRef = useRef([]);
   const remoteAudioRef = useRef(null);
   const ringRef = useRef({ audioContext: null, oscillator: null, timer: null });
+  const messageInputRef = useRef(null);
   const [replyMessage, setReplyMessage] = useState(null);
-const [touchStartX, setTouchStartX] = useState(null);
+  const [touchStartX, setTouchStartX] = useState(null);
   const [selectedActionMessage, setSelectedActionMessage] = useState(null);
   const [highlightedMessageId, setHighlightedMessageId] = useState(null);
   const messageRefs = useRef({});
@@ -47,6 +50,24 @@ const [touchStartX, setTouchStartX] = useState(null);
   };
 
   const currentUser = () => JSON.parse(localStorage.getItem("user") || "{}");
+  const quickReactions = ["❤️", "😂", "👍", "😮", "😢", "🙏"];
+
+  const normalizeIncomingMessage = (message, userId) => ({
+    id: message.id,
+    text: message.text,
+    sender: message.senderId === userId ? "me" : "other",
+    senderId: message.senderId,
+    timestamp: message.timestamp,
+    forwarded: message.forwarded,
+    reactions: message.reactions || [],
+    replyTo: message.replyTo
+      ? {
+          ...message.replyTo,
+          sender: message.replyTo.senderId === userId ? "me" : "other",
+        }
+      : null,
+    deletedForEveryone: message.deletedForEveryone || false,
+  });
 
   const stopLocalStream = () => {
     localStreamRef.current?.getTracks().forEach((track) => track.stop());
@@ -190,6 +211,7 @@ const [touchStartX, setTouchStartX] = useState(null);
 const handleReply = (message) => {
   setReplyMessage(message);
   setSelectedActionMessage(null);
+  setTimeout(() => messageInputRef.current?.focus(), 0);
 };
 
 const handleDeleteForEveryone = async (message) => {
@@ -264,26 +286,44 @@ const handleReaction = async (message, emoji) => {
     if (!socket) return undefined;
 
     const onNewMessage = (message) => {
+      const userId = currentUser().id;
       setMessages((prev) => {
         if (prev.some((item) => item.id === message.id)) return prev;
-        return [
-          ...prev,
-          {
-            id: message.id,
-            text: message.text,
-            sender:
-              message.senderId ===
-              JSON.parse(localStorage.getItem("user") || "{}").id
-                ? "me"
-                : "other",
-            timestamp: message.timestamp,
-          },
-        ];
+        return [...prev, normalizeIncomingMessage(message, userId)];
       });
     };
 
+    const onMessageDeleted = ({ messageId }) => {
+      setMessages((prev) =>
+        prev.map((item) =>
+          item.id === messageId
+            ? {
+                ...item,
+                text: "This message was deleted",
+                deletedForEveryone: true,
+              }
+            : item,
+        ),
+      );
+    };
+
+    const onMessageReaction = ({ messageId, reactions }) => {
+      setMessages((prev) =>
+        prev.map((item) =>
+          item.id === messageId ? { ...item, reactions } : item,
+        ),
+      );
+    };
+
     socket.on("message:new", onNewMessage);
-    return () => socket.off("message:new", onNewMessage);
+    socket.on("message:deleted", onMessageDeleted);
+    socket.on("message:reaction", onMessageReaction);
+
+    return () => {
+      socket.off("message:new", onNewMessage);
+      socket.off("message:deleted", onMessageDeleted);
+      socket.off("message:reaction", onMessageReaction);
+    };
   }, []);
 
   useEffect(() => {
@@ -630,7 +670,7 @@ const handleReaction = async (message, emoji) => {
   }`}
   onTouchStart={(e) => setTouchStartX(e.touches[0].clientX)}
   onTouchEnd={(e) => {
-    if (touchStartX === null) return;
+    if (touchStartX === null || message.deletedForEveryone) return;
 
     const diff = e.changedTouches[0].clientX - touchStartX;
 
@@ -644,7 +684,9 @@ const handleReaction = async (message, emoji) => {
   <div className="message-content">
     {!message.deletedForEveryone && (
       <button
+        type="button"
         className="message-menu-btn"
+        title="Message options"
         onClick={(e) => {
           e.stopPropagation();
           setSelectedActionMessage(
@@ -661,56 +703,68 @@ const handleReaction = async (message, emoji) => {
     )}
 
     {message.replyTo && (
-      <div
+      <button
+        type="button"
         className="reply-box"
         onClick={() => scrollToMessage(message.replyTo.id)}
       >
-        <div className="reply-line"></div>
+        <span className="reply-line"></span>
 
-        <div className="reply-body">
-          <div className="reply-name">
+        <span className="reply-body">
+          <span className="reply-name">
             {message.replyTo.sender === "me"
               ? "You"
               : message.replyTo.senderName || selectedConversation.name}
-          </div>
+          </span>
 
-          <div className="reply-text">{message.replyTo.text}</div>
-        </div>
-      </div>
+          <span className="reply-text">{message.replyTo.text}</span>
+        </span>
+      </button>
     )}
 
-    <p className={message?.deletedForEveryone ? "deleted-text" : ""}>
+    <p className={message.deletedForEveryone ? "deleted-text" : ""}>
       {message.text}
     </p>
 
     {message.reactions?.length > 0 && (
       <div className="message-reactions">
         {message.reactions.map((reaction, index) => (
-          <span key={index}>{reaction.emoji}</span>
+          <span key={`${reaction.userId || index}-${index}`}>
+            {reaction.emoji}
+          </span>
         ))}
       </div>
     )}
 
     <div className="message-footer">
+      <button
+        type="button"
+        className="quick-reply-btn"
+        title="Reply"
+        onClick={() => handleReply(message)}
+        disabled={message.deletedForEveryone}
+      >
+        <Reply size={14} />
+      </button>
       <span className="message-time">{formatTime(message.timestamp)}</span>
     </div>
 
     {selectedActionMessage?.id === message.id && (
       <div className="message-action-menu">
-        <button onClick={() => handleReply(message)}>Reply</button>
-        <button onClick={() => handleForward(message)}>Forward</button>
+        <button type="button" onClick={() => handleReply(message)}>Reply</button>
+        <button type="button" onClick={() => handleForward(message)}>Forward</button>
 
         <div className="reaction-row">
-          {["❤️", "😂", "👍", "😮", "😢", "🙏"].map((emoji) => (
-            <button key={emoji} onClick={() => handleReaction(message, emoji)}>
+          {quickReactions.map((emoji) => (
+            <button type="button" key={emoji} onClick={() => handleReaction(message, emoji)}>
               {emoji}
             </button>
           ))}
         </div>
 
         {message.sender === "me" && (
-          <button onClick={() => handleDeleteForEveryone(message)}>
-            Delete for Everyone
+          <button type="button" onClick={() => handleDeleteForEveryone(message)}>
+            Delete for everyone
           </button>
         )}
       </div>
@@ -721,27 +775,35 @@ const handleReaction = async (message, emoji) => {
 </div>
   {replyMessage && (
                   <div className="reply-preview-box">
-                    <div>
+                    <div className="reply-preview-accent"></div>
+                    <div className="reply-preview-content">
                       <strong>
                         Replying to{" "}
                         {replyMessage.sender === "me"
-                          ? "yourself"
+                          ? "your message"
                           : selectedConversation.name}
                       </strong>
                       <p>{replyMessage.text}</p>
                     </div>
 
-                    <button onClick={() => setReplyMessage(null)}>×</button>
+                    <button
+                      type="button"
+                      title="Cancel reply"
+                      onClick={() => setReplyMessage(null)}
+                    >
+                      <X size={18} />
+                    </button>
                   </div>
                 )}
               {/* Message Input */}
               <div className="message-input-area">
               
-                <button className="input-icon-btn">
+                <button type="button" className="input-icon-btn">
                   <Paperclip size={20} />
                 </button>
 
                 <input
+                  ref={messageInputRef}
                   type="text"
                   placeholder="Type a message..."
                   value={messageText}
@@ -751,6 +813,7 @@ const handleReaction = async (message, emoji) => {
 
                 <div className="emoji-wrapper">
                   <button
+                    type="button"
                     className="input-icon-btn"
                     onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                   >
@@ -770,6 +833,7 @@ const handleReaction = async (message, emoji) => {
                 </div>
 
                 <button
+                  type="button"
                   className="send-btn"
                   onClick={handleSendMessage}
                   disabled={!messageText.trim()}

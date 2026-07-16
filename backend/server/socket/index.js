@@ -127,26 +127,5 @@ export function registerSocketHandlers(io) {
       markUserOffline(socket.user.id);
     });
 
-    socket.on("message:deleted", ({ messageId }) => {
-      setMessages((prev) =>
-        prev.map((item) =>
-          item.id === messageId
-            ? {
-                ...item,
-                text: "This message was deleted",
-                deletedForEveryone: true,
-              }
-            : item,
-        ),
-      );
-    });
-
-    socket.on("message:reaction", ({ messageId, reactions }) => {
-      setMessages((prev) =>
-        prev.map((item) =>
-          item.id === messageId ? { ...item, reactions } : item,
-        ),
-      );
-    });
   });
 }
