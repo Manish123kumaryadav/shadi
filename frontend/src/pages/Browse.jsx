@@ -26,7 +26,11 @@ const Browse = () => {
     try {
       setIsLoading(true);
       setError('');
-      const response = await matchService.getMatches({ ...activeFilters, limit: PROFILE_FETCH_LIMIT });
+      const response = await matchService.getMatches({
+        ...activeFilters,
+        compatible: true,
+        limit: PROFILE_FETCH_LIMIT,
+      });
       setProfiles(response.data);
       setCurrentSlide(0);
     } catch (err) {

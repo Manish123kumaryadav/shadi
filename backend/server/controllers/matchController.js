@@ -25,8 +25,8 @@ export async function getMatches(req, res) {
         model: User,
         where: {
           id: { [Op.ne]: req.user.id },
+          gender: req.user.lookingFor,
           ...(req.query.compatible === 'true' ? {
-            gender: req.user.lookingFor,
             lookingFor: req.user.gender,
           } : {}),
           ...(dobRange ? { dob: dobRange } : {}),
