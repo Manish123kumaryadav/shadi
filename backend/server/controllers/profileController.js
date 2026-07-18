@@ -1,6 +1,7 @@
 import { Op } from 'sequelize';
 import { User, Profile, Photo, ProfileView, Subscription } from '../models/index.js';
 import { formatProfile } from '../utils.js';
+import { sendProfileViewEmail } from '../services/email.js';
 
 function activeSubscriptionInclude() {
   return {
@@ -149,11 +150,21 @@ export async function getProfileById(req, res) {
 
     if (profile.userId !== req.user.id) {
       try {
-        await ProfileView.findOrCreate({
+        const [, created] = await ProfileView.findOrCreate({
           where: { viewerId: req.user.id, viewedUserId: profile.userId },
         });
+
+        if (created) {
+          const viewerProfile = await Profile.findOne({ where: { userId: req.user.id } });
+          await sendProfileViewEmail({
+            to: profile.User?.email,
+            recipientName: profile.User?.fullName,
+            viewerName: req.user.fullName,
+            viewerProfileId: viewerProfile?.id,
+          });
+        }
       } catch (viewError) {
-        console.warn('Could not record profile view:', viewError.message);
+        console.warn('Could not record profile view or send email:', viewError.message);
       }
     }
 

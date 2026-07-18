@@ -394,6 +394,19 @@ VITE_API_BASE_URL=http://localhost:3000/api
 VITE_API_TIMEOUT=5000
 ```
 
+For backend email notifications, set these in Railway/backend environment:
+```
+CLIENT_URL=https://shadi-vojz.vercel.app
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=your-smtp-user
+SMTP_PASS=your-smtp-password
+EMAIL_FROM="ShadiMatch <no-reply@example.com>"
+```
+
+Profile-like and first-time profile-view emails are sent from these SMTP settings.
+
 Access in code:
 ```javascript
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;

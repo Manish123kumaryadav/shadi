@@ -1,6 +1,7 @@
 import { Op } from 'sequelize';
 import { User, Profile, Photo, Like, ProfileView, Subscription } from '../models/index.js';
 import { formatProfile } from '../utils.js';
+import { sendProfileLikeEmail } from '../services/email.js';
 
 const FREE_LIKE_LIMIT = 5;
 
@@ -76,7 +77,7 @@ export async function getMatches(req, res) {
 }
 
 export async function likeProfile(req, res) {
-  const profile = await Profile.findByPk(req.params.profileId);
+  const profile = await Profile.findByPk(req.params.profileId, { include: [User] });
   if (!profile || profile.userId === req.user.id) {
     return res.status(404).json({ message: 'Profile not found' });
   }
@@ -84,6 +85,7 @@ export async function likeProfile(req, res) {
   const existingLike = await Like.findOne({
     where: { fromUserId: req.user.id, toUserId: profile.userId },
   });
+  const shouldNotify = existingLike?.status !== 'liked';
   const isPremium = await hasActivePremium(req.user.id);
 
   if (!isPremium && existingLike?.status !== 'liked') {
@@ -105,6 +107,20 @@ export async function likeProfile(req, res) {
     toUserId: profile.userId,
     status: 'liked',
   });
+
+  if (shouldNotify) {
+    try {
+      const likerProfile = await Profile.findOne({ where: { userId: req.user.id } });
+      await sendProfileLikeEmail({
+        to: profile.User?.email,
+        recipientName: profile.User?.fullName,
+        likerName: req.user.fullName,
+        likerProfileId: likerProfile?.id,
+      });
+    } catch (emailError) {
+      console.warn('Could not send profile like email:', emailError.message);
+    }
+  }
 
   const mutual = await Like.findOne({
     where: {
