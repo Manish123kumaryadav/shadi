@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import dns from 'node:dns';
+import net from 'node:net';
 
 function envValue(key, fallback = '') {
   return String(process.env[key] || fallback).trim().replace(/^"|"$/g, '');
@@ -12,13 +13,42 @@ function hasSmtpConfig() {
 function createTransporter() {
   if (!hasSmtpConfig()) return null;
 
+  const smtpHost = envValue('SMTP_HOST');
+  const smtpPort = Number(envValue('SMTP_PORT', '587'));
+
   return nodemailer.createTransport({
-    host: envValue('SMTP_HOST'),
-    port: Number(envValue('SMTP_PORT', '587')),
+    host: smtpHost,
+    port: smtpPort,
     secure: envValue('SMTP_SECURE') === 'true',
     family: 4,
     lookup: (hostname, options, callback) => {
       dns.lookup(hostname, { ...options, family: 4 }, callback);
+    },
+    getSocket: async (options, callback) => {
+      try {
+        const [address] = await dns.promises.resolve4(smtpHost);
+        if (!address) throw new Error(`No IPv4 address found for ${smtpHost}`);
+
+        const connection = net.connect({
+          host: address,
+          port: smtpPort,
+        });
+
+        connection.once('connect', () => {
+          callback(null, {
+            connection,
+            tls: {
+              servername: smtpHost,
+            },
+          });
+        });
+        connection.once('error', callback);
+      } catch (error) {
+        callback(error);
+      }
+    },
+    tls: {
+      servername: smtpHost,
     },
     auth: {
       user: envValue('SMTP_USER'),
