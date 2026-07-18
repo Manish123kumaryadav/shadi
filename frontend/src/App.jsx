@@ -16,10 +16,11 @@ const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 function AppLayout({ isLoggedIn, onLogout, onLoginSuccess }) {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
+  const isHomeRoute = location.pathname === '/';
 
   return (
     <div className="App">
-      {!isAdminRoute && <Navbar isLoggedIn={isLoggedIn} onLogout={onLogout} />}
+      {!isAdminRoute && !isHomeRoute && <Navbar isLoggedIn={isLoggedIn} onLogout={onLogout} />}
 
       <main className="main-content">
         <Suspense fallback={<div className="route-loading">Loading...</div>}>

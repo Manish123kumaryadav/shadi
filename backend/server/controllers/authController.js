@@ -24,6 +24,11 @@ export async function register(req, res) {
       religion,
       caste,
       motherTongue,
+      location,
+      education,
+      occupation,
+      height,
+      photoUrl,
     } = req.body;
 
     if (!fullName || !email || !mobile || !password || !dob) {
@@ -32,6 +37,10 @@ export async function register(req, res) {
 
     const normalizedLookingFor = lookingFor || gender || 'female';
     const normalizedGender = lookingFor ? gender : inferGenderFromLookingFor(normalizedLookingFor);
+    const customPhotoUrl = typeof photoUrl === 'string'
+      && (photoUrl.startsWith('data:image/') || photoUrl.startsWith('http'))
+      ? photoUrl
+      : '';
     const passwordHash = await bcrypt.hash(password, 10);
 
     const user = await User.create({
@@ -50,7 +59,10 @@ export async function register(req, res) {
       religion,
       caste,
       motherTongue,
-      location: '',
+      location: location || '',
+      education,
+      occupation,
+      height,
       bio: '',
       interests: [],
     });
@@ -58,9 +70,9 @@ export async function register(req, res) {
     await Photo.create({
       profileId: profile.id,
       isPrimary: true,
-      url: normalizedGender === 'male'
+      url: customPhotoUrl || (normalizedGender === 'male'
         ? 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&w=400'
-        : 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&w=400',
+        : 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&w=400'),
     });
 
     const savedProfile = await Profile.findByPk(profile.id, {

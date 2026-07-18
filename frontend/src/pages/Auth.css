@@ -144,6 +144,313 @@
   text-decoration: underline;
 }
 
+.register-page {
+  align-items: stretch;
+  padding: 0;
+  background:
+    linear-gradient(90deg, rgba(116, 31, 37, 0.9), rgba(212, 70, 52, 0.82)),
+    url("https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&w=1600&q=80");
+  background-size: cover;
+  background-position: center;
+}
+
+.register-shell {
+  width: min(1180px, 100%);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 2.5rem;
+  display: grid;
+  grid-template-columns: minmax(280px, 0.85fr) minmax(420px, 1.15fr);
+  gap: 2rem;
+  align-items: center;
+}
+
+.register-intro {
+  color: #fff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+}
+
+.register-logo {
+  position: relative;
+  display: inline-flex;
+  align-items: flex-start;
+  margin-bottom: 3rem;
+  color: #fff;
+  text-decoration: none;
+  font-family: Georgia, "Times New Roman", serif;
+  line-height: 1;
+}
+
+.register-logo span {
+  color: #fff;
+  font-size: 3rem;
+  font-weight: 700;
+}
+
+.register-logo svg {
+  position: absolute;
+  top: -0.15rem;
+  right: -1rem;
+  color: #83f3e7;
+}
+
+.register-intro h1 {
+  max-width: 460px;
+  margin: 0;
+  font-size: clamp(2.4rem, 5vw, 4.8rem);
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.register-intro p {
+  max-width: 430px;
+  margin: 1.25rem 0 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.08rem;
+  line-height: 1.7;
+}
+
+.register-points {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 2rem;
+}
+
+.register-points span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: fit-content;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(8px);
+  font-weight: 700;
+}
+
+.register-card {
+  width: 100%;
+  padding: 2rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 24px 70px rgba(45, 14, 18, 0.32);
+}
+
+.register-progress {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.register-progress span,
+.register-progress small {
+  color: #8a94a6;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.register-progress strong {
+  display: block;
+  margin-top: 0.2rem;
+  color: #2c3e50;
+  font-size: 1.35rem;
+}
+
+.progress-track {
+  height: 8px;
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #f1d9d5;
+}
+
+.progress-track div {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #e74c3c, #53bad1);
+  transition: width 0.25s ease;
+}
+
+.register-step h2 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 1.55rem;
+}
+
+.register-step > p {
+  margin: 0.45rem 0 1.35rem;
+  color: #7f8c8d;
+  line-height: 1.5;
+}
+
+.register-card .form-group {
+  margin-bottom: 1rem;
+}
+
+.register-card .form-group label {
+  color: #374151;
+  font-size: 0.92rem;
+}
+
+.register-card .form-group input,
+.register-card .form-group select {
+  min-height: 46px;
+  border-color: #d7dee7;
+  background: #fff;
+}
+
+.register-card .form-group select.input-error,
+.register-card .form-group input.input-error {
+  border-color: #e74c3c;
+  background-color: #fff4f2;
+}
+
+.segmented-field {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem;
+}
+
+.segmented-field label {
+  min-height: 46px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #d7dee7;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  font-weight: 800;
+  color: #4b5563;
+}
+
+.segmented-field label.active {
+  border-color: #e74c3c;
+  background: #fff0ee;
+  color: #c0392b;
+}
+
+.segmented-field input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.profile-photo-upload {
+  display: grid;
+  grid-template-columns: 86px 1fr;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding: 0.85rem;
+  border: 1px solid #e4e8ef;
+  border-radius: 8px;
+  background: #f9fafb;
+}
+
+.profile-photo-upload img {
+  width: 86px;
+  height: 86px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #fff;
+  box-shadow: 0 8px 24px rgba(44, 62, 80, 0.14);
+}
+
+.profile-photo-upload label {
+  min-height: 46px;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border: 1px solid #d7dee7;
+  border-radius: 8px;
+  background: #fff;
+  color: #c0392b;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.profile-photo-upload input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.profile-photo-upload .error-text {
+  grid-column: 1 / -1;
+  margin-top: -0.35rem;
+}
+
+.register-terms {
+  position: relative;
+  align-items: flex-start;
+  gap: 0.65rem;
+}
+
+.register-terms .error-text {
+  position: absolute;
+  left: 0;
+  top: 100%;
+}
+
+.register-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1.4rem;
+}
+
+.step-btn {
+  min-height: 48px;
+  padding: 0 1.15rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border-radius: 8px;
+  border: none;
+  text-decoration: none;
+  font-weight: 900;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.step-btn:hover {
+  transform: translateY(-1px);
+}
+
+.step-btn.primary {
+  min-width: 170px;
+  background: #53bad1;
+  color: #fff;
+  box-shadow: 0 12px 28px rgba(83, 186, 209, 0.28);
+}
+
+.step-btn.primary:hover {
+  background: #42abc4;
+}
+
+.step-btn.primary:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.step-btn.secondary {
+  background: #f4f6f8;
+  color: #56616f;
+}
+
+.register-card .auth-footer {
+  margin-top: 1.35rem;
+}
+
 @media (max-width: 600px) {
   .auth-card {
     padding: 1.5rem;
@@ -155,5 +462,73 @@
 
   .form-row {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .register-shell {
+    grid-template-columns: 1fr;
+    padding: 1.25rem;
+  }
+
+  .register-intro {
+    text-align: center;
+  }
+
+  .register-logo,
+  .register-points span {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .register-intro h1,
+  .register-intro p {
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+@media (max-width: 560px) {
+  .register-shell {
+    padding: 0;
+  }
+
+  .register-intro {
+    padding: 1.2rem 1rem 0;
+  }
+
+  .register-logo {
+    margin-bottom: 1.4rem;
+  }
+
+  .register-points {
+    display: none;
+  }
+
+  .register-card {
+    border-radius: 18px 18px 0 0;
+    padding: 1.25rem;
+  }
+
+  .register-actions,
+  .register-progress {
+    align-items: stretch;
+  }
+
+  .register-actions {
+    flex-direction: column-reverse;
+  }
+
+  .step-btn {
+    width: 100%;
+  }
+
+  .profile-photo-upload {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+
+  .profile-photo-upload label {
+    width: 100%;
   }
 }
