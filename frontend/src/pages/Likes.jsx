@@ -23,6 +23,7 @@ const Likes = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('likes');
   const [likes, setLikes] = useState([]);
+  const [likedProfiles, setLikedProfiles] = useState([]);
   const [views, setViews] = useState([]);
   const [plans, setPlans] = useState([]);
   const [premiumStatus, setPremiumStatus] = useState({ isPremium: false, subscription: null });
@@ -36,12 +37,26 @@ const Likes = () => {
       try {
         setIsLoading(true);
         setConnectionError('');
-        const [likesResponse, viewsResponse] = await Promise.all([
+        const [likesResponse, likedProfilesResponse, viewsResponse] = await Promise.allSettled([
           matchService.getLikes(),
+          matchService.getLikedProfiles(),
           matchService.getViews(),
         ]);
-        setLikes(likesResponse.data);
-        setViews(viewsResponse.data);
+
+        if (likesResponse.status === 'fulfilled') {
+          setLikes(likesResponse.value.data);
+        }
+        if (likedProfilesResponse.status === 'fulfilled') {
+          setLikedProfiles(likedProfilesResponse.value.data);
+        }
+        if (viewsResponse.status === 'fulfilled') {
+          setViews(viewsResponse.value.data);
+        }
+
+        const failedResponse = [likesResponse, likedProfilesResponse, viewsResponse].find((item) => item.status === 'rejected');
+        if (failedResponse) {
+          setConnectionError(failedResponse.reason?.response?.data?.message || 'Some connection data could not load.');
+        }
       } catch (error) {
         setConnectionError(error.response?.data?.message || 'Could not load connections.');
       } finally {
@@ -113,6 +128,7 @@ const Likes = () => {
 
   const removeProfileFromLists = (id) => {
     setLikes((prev) => prev.filter((profile) => profile.id !== id));
+    setLikedProfiles((prev) => prev.filter((profile) => profile.id !== id));
     setViews((prev) => prev.filter((profile) => profile.id !== id));
   };
 
@@ -156,7 +172,7 @@ const Likes = () => {
 
   const renderProfiles = (profiles) => (
     <div className="profiles-grid">
-      {profiles.map((profile) => (
+      {profiles.length ? profiles.map((profile) => (
         <div key={profile.id} className="like-card">
           <div className="like-image">
             <img src={profile.image} alt={profile.name} onClick={() => handleViewProfile(profile.id)} />
@@ -181,7 +197,12 @@ const Likes = () => {
             <button className="action-btn like" onClick={() => handleLikeBack(profile.id)}>❤️</button>
           </div>
         </div>
-      ))}
+      )) : (
+        <div className="no-profiles inline-empty">
+          <h3>No profiles yet</h3>
+          <p>When someone interacts with your profile, their card will appear here.</p>
+        </div>
+      )}
     </div>
   );
 
@@ -198,6 +219,12 @@ const Likes = () => {
           onClick={() => setActiveTab('likes')}
         >
           <Heart size={20} /> Likes Received ({likes.length})
+        </button>
+        <button
+          className={`tab ${activeTab === 'liked' ? 'active' : ''}`}
+          onClick={() => setActiveTab('liked')}
+        >
+          <Heart size={20} /> Profiles I Liked ({likedProfiles.length})
         </button>
         <button
           className={`tab ${activeTab === 'views' ? 'active' : ''}`}
@@ -221,6 +248,13 @@ const Likes = () => {
           <div>
             <h2>People Who Liked You</h2>
             {renderProfiles(likes)}
+          </div>
+        )}
+
+        {!isLoading && activeTab === 'liked' && (
+          <div>
+            <h2>Profiles You Liked</h2>
+            {renderProfiles(likedProfiles)}
           </div>
         )}
 

@@ -16,6 +16,7 @@ import {
 } from '../controllers/profileController.js';
 import {
   getLikes,
+  getLikedProfiles,
   getMatches,
   getViews,
   likeProfile,
@@ -75,6 +76,7 @@ router.post('/matches/:profileId/like', authRequired, likeProfile);
 router.post('/matches/:profileId/unlike', authRequired, unlikeProfile);
 router.post('/matches/:profileId/pass', authRequired, passProfile);
 router.get('/matches/likes', authRequired, getLikes);
+router.get('/matches/liked', authRequired, getLikedProfiles);
 router.get('/matches/views', authRequired, getViews);
 
 router.get('/premium/plans', authRequired, getPremiumPlans);

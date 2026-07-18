@@ -98,7 +98,29 @@ export async function getLikes(req, res) {
     order: [['updatedAt', 'DESC']],
   });
 
-  res.json(likes.map((like) => formatProfile(like.FromUser.Profile)));
+  res.json(likes
+    .map((like) => like.FromUser?.Profile)
+    .filter(Boolean)
+    .map(formatProfile));
+}
+
+export async function getLikedProfiles(req, res) {
+  const likes = await Like.findAll({
+    where: { fromUserId: req.user.id, status: 'liked' },
+    include: [
+      {
+        model: User,
+        as: 'ToUser',
+        include: [{ model: Profile, include: [Photo] }],
+      },
+    ],
+    order: [['updatedAt', 'DESC']],
+  });
+
+  res.json(likes
+    .map((like) => like.ToUser?.Profile)
+    .filter(Boolean)
+    .map(formatProfile));
 }
 
 export async function getViews(req, res) {
@@ -114,5 +136,8 @@ export async function getViews(req, res) {
     order: [['updatedAt', 'DESC']],
   });
 
-  res.json(views.map((view) => formatProfile(view.Viewer.Profile)));
+  res.json(views
+    .map((view) => view.Viewer?.Profile)
+    .filter(Boolean)
+    .map(formatProfile));
 }

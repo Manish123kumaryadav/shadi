@@ -69,6 +69,7 @@ export const matchService = {
   pass: (profileId) => api.post(`/matches/${profileId}/pass`),
   unlike: (profileId) => api.post(`/matches/${profileId}/unlike`),
   getLikes: () => api.get("/matches/likes"),
+  getLikedProfiles: () => api.get("/matches/liked"),
   getViews: () => api.get("/matches/views"),
 };
 

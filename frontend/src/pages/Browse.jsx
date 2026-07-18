@@ -26,7 +26,7 @@ const Browse = () => {
   const loadStats = async () => {
     try {
       const [likesResponse, viewsResponse] = await Promise.all([
-        matchService.getLikes(),
+        matchService.getLikedProfiles(),
         matchService.getViews(),
       ]);
       setStats({
