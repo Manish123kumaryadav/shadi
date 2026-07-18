@@ -6,9 +6,38 @@ import {
   Conversation,
   ConversationMember,
   Message,
+  Subscription,
 } from "../models/index.js";
 import { sendOfflineMessageEmail } from "../services/email.js";
 import { isUserOnline } from "../services/presence.js";
+
+const FREE_MESSAGE_LIMIT = 5;
+
+async function hasActivePremium(userId) {
+  try {
+    const subscription = await Subscription.findOne({
+      where: {
+        userId,
+        status: "active",
+        endsAt: { [Op.gte]: new Date() },
+      },
+    });
+
+    return Boolean(subscription);
+  } catch (error) {
+    console.warn("Could not check premium message access:", error.message);
+    return false;
+  }
+}
+
+async function getSentMessageCount(userId) {
+  return Message.count({
+    where: {
+      senderId: userId,
+      deletedForEveryone: false,
+    },
+  });
+}
 
 async function getConversationForUsers(userId, otherUserId) {
   const memberships = await ConversationMember.findAll({
@@ -145,6 +174,20 @@ export async function sendMessage(req, res) {
 
   if (!member) return res.status(404).json({ message: "Conversation not found" });
   if (!req.body.message?.trim()) return res.status(400).json({ message: "Message is required" });
+
+  const isPremium = await hasActivePremium(req.user.id);
+
+  if (!isPremium) {
+    const sentCount = await getSentMessageCount(req.user.id);
+
+    if (sentCount >= FREE_MESSAGE_LIMIT) {
+      return res.status(403).json({
+        message: `Free members can send up to ${FREE_MESSAGE_LIMIT} messages. Upgrade to Premium for unlimited messaging.`,
+        code: "MESSAGE_LIMIT_REACHED",
+        limit: FREE_MESSAGE_LIMIT,
+      });
+    }
+  }
 
   let replyToMessage = null;
 

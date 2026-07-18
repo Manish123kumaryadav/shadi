@@ -282,6 +282,29 @@
   opacity: 0.9;
 }
 
+.premium-benefits {
+  margin: 1rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+  list-style: none;
+}
+
+.premium-benefits li {
+  position: relative;
+  padding-left: 1.35rem;
+  line-height: 1.35;
+  font-size: 0.95rem;
+}
+
+.premium-benefits li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-weight: 900;
+}
+
 .premium-card .btn {
   white-space: nowrap;
   margin-left: 2rem;

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   MoreVertical,
   Paperclip,
@@ -21,6 +21,7 @@ const rtcConfig = {
 
 const Messages = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [conversations, setConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -519,14 +520,26 @@ const handleReaction = async (message, emoji) => {
   if (!messageText.trim()) return;
   if (!selectedConversation) return;
 
-  await messageService.sendMessage(
-    selectedConversation.id,
-    messageText,
-    replyMessage?.id || null
-  );
+  try {
+    await messageService.sendMessage(
+      selectedConversation.id,
+      messageText,
+      replyMessage?.id || null
+    );
 
-  setMessageText("");
-  setReplyMessage(null);
+    setMessageText("");
+    setReplyMessage(null);
+  } catch (error) {
+    const message = error.response?.data?.message || "Could not send message.";
+
+    if (error.response?.data?.code === "MESSAGE_LIMIT_REACHED") {
+      const shouldUpgrade = window.confirm(`${message}\n\nOpen Premium plan now?`);
+      if (shouldUpgrade) navigate("/likes#premium");
+      return;
+    }
+
+    alert(message);
+  }
 };
 
   const handleSelectConversation = async (conversation) => {

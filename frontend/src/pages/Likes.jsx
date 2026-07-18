@@ -277,6 +277,19 @@ const Likes = () => {
                 ? `Your plan is active until ${new Date(premiumStatus.subscription.endsAt).toLocaleDateString()}.`
                 : 'See who likes you, track profile visitors, get unlimited likes, and improve visibility.'}
             </p>
+            <ul className="premium-benefits">
+              {(plans[0]?.features || premiumStatus.subscription?.plan?.features || [
+                'See full profiles of everyone who liked you',
+                'See who viewed your profile',
+                'Unlimited likes and quick connect actions',
+                'Unlimited messaging after match; free members get 5 messages',
+                'Priority profile visibility in suggestions',
+                'Premium badge on your profile',
+                'Priority support for account help',
+              ]).map((benefit) => (
+                <li key={benefit}>{benefit}</li>
+              ))}
+            </ul>
           </div>
           {premiumStatus.isPremium ? (
             <button className="btn btn-primary" disabled>Active</button>

@@ -305,10 +305,18 @@ VALUES
   (
     'premium_monthly',
     'Premium Plan',
-    'Unlock advanced discovery and unlimited connection actions.',
+    'Unlock all connection insights and premium discovery tools.',
     499,
     30,
-    JSON_ARRAY('See all likes received', 'See profile visitors', 'Unlimited likes', 'Priority profile visibility'),
+    JSON_ARRAY(
+      'See full profiles of everyone who liked you',
+      'See who viewed your profile',
+      'Unlimited likes and quick connect actions',
+      'Unlimited messaging after match; free members get 5 messages',
+      'Priority profile visibility in suggestions',
+      'Premium badge on your profile',
+      'Priority support for account help'
+    ),
     1,
     1,
     NOW(),
