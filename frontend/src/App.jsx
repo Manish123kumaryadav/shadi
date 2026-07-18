@@ -7,6 +7,7 @@ import Login from './pages/Login';
 import Browse from './pages/Browse';
 import Messages from './pages/Messages';
 import Profile from './pages/Profile';
+import ProfileDetail from './pages/ProfileDetail';
 import Likes from './pages/Likes';
 import FooterPage from './pages/FooterPage';
 import './App.css';
@@ -38,6 +39,7 @@ function AppLayout({ isLoggedIn, onLogout, onLoginSuccess }) {
                 <Route path="/browse" element={<Browse />} />
                 <Route path="/messages" element={<Messages />} />
                 <Route path="/profile" element={<Profile />} />
+                <Route path="/profiles/:id" element={<ProfileDetail />} />
                 <Route path="/likes" element={<Likes />} />
               </>
             ) : (

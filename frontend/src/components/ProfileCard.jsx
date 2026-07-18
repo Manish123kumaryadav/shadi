@@ -4,13 +4,12 @@ import './ProfileCard.css';
 
 const ProfileCard = ({ profile, onLike, onPass, onMessage, onViewProfile }) => {
   return (
-    <div className="profile-card">
+    <div className="profile-card" onClick={() => onViewProfile(profile.id)}>
       <div className="profile-image-container">
         <img
           src={profile.image}
           alt={profile.name}
           className="profile-image"
-          onClick={() => onViewProfile(profile.id)}
         />
         {profile.verified && (
           <div className="verified-badge">
@@ -46,7 +45,7 @@ const ProfileCard = ({ profile, onLike, onPass, onMessage, onViewProfile }) => {
         </div>
       </div>
 
-      <div className="profile-actions">
+      <div className="profile-actions" onClick={(event) => event.stopPropagation()}>
         <button
           className="action-btn pass-btn"
           onClick={() => onPass(profile.id)}

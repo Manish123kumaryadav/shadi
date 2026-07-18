@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Heart, Eye } from 'lucide-react';
-import { matchService, messageService, premiumService, profileService } from '../services/api';
+import { matchService, messageService, premiumService } from '../services/api';
 import './Likes.css';
 
 function loadRazorpayCheckout() {
@@ -177,20 +177,14 @@ const Likes = () => {
     }
   };
 
-  const handleViewProfile = async (id) => {
-    try {
-      const response = await profileService.getProfile(id);
-      const profile = response.data;
-      alert(`${profile.name}, ${profile.age}\n${profile.location}\n${profile.bio || 'No bio yet.'}`);
-    } catch (error) {
-      alert(error.response?.data?.message || 'Could not open profile.');
-    }
+  const handleViewProfile = (id) => {
+    navigate(`/profiles/${id}`);
   };
 
   const renderProfiles = (profiles) => (
     <div className="profiles-grid">
       {profiles.length ? profiles.map((profile) => (
-        <div key={profile.id} className="like-card">
+        <div key={profile.id} className="like-card" onClick={() => handleViewProfile(profile.id)}>
           <div className="like-image">
             <img src={profile.image} alt={profile.name} onClick={() => handleViewProfile(profile.id)} />
             {profile.verified && <div className="verified-badge">✓ Verified</div>}
@@ -209,7 +203,7 @@ const Likes = () => {
             </div>
           </div>
 
-          <div className="like-actions">
+          <div className="like-actions" onClick={(event) => event.stopPropagation()}>
             <button className="action-btn pass" onClick={() => handlePassProfile(profile.id)}>✕</button>
             <button className="action-btn message" onClick={() => handleMessageProfile(profile.id)}>💬</button>
             <button className="action-btn like" onClick={() => handleLikeBack(profile.id)}>❤️</button>

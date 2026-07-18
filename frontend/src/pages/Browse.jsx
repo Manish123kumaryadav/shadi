@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ProfileCard from '../components/ProfileCard';
 import { ChevronLeft, ChevronRight, Filter, Zap } from 'lucide-react';
-import { matchService, messageService, profileService } from '../services/api';
+import { matchService, messageService } from '../services/api';
 import './Browse.css';
 
 const PROFILE_FETCH_LIMIT = 500;
@@ -94,14 +94,8 @@ const Browse = () => {
     }
   };
 
-  const handleViewProfile = async (id) => {
-    try {
-      const response = await profileService.getProfile(id);
-      const profile = response.data;
-      alert(`${profile.name}, ${profile.age}\n${profile.location}\n${profile.bio || 'No bio yet.'}`);
-    } catch (err) {
-      alert(err.response?.data?.message || 'Could not open profile.');
-    }
+  const handleViewProfile = (id) => {
+    navigate(`/profiles/${id}`);
   };
 
   const handleFilterChange = (e) => {
