@@ -118,7 +118,11 @@ export async function likeProfile(req, res) {
         likerProfileId: likerProfile?.id,
       });
     } catch (emailError) {
-      console.warn('Could not send profile like email:', emailError.message);
+      console.warn('Could not send profile like email:', {
+        code: emailError.code,
+        command: emailError.command,
+        message: emailError.message,
+      });
     }
   }
 

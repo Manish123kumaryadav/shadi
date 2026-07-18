@@ -164,7 +164,11 @@ export async function getProfileById(req, res) {
           });
         }
       } catch (viewError) {
-        console.warn('Could not record profile view or send email:', viewError.message);
+        console.warn('Could not record profile view or send email:', {
+          code: viewError.code,
+          command: viewError.command,
+          message: viewError.message,
+        });
       }
     }
 
