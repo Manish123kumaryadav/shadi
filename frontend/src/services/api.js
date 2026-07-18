@@ -57,8 +57,8 @@ export const profileService = {
   updateMe: (data) => api.put("/profiles/me", data),
   getProfile: (id) => api.get(`/profiles/${id}`),
   updateProfile: (id, data) => api.put(`/profiles/${id}`, data),
-  uploadPhoto: (id, formData) => api.post(`/profiles/${id}/photos`, formData),
-  deletePhoto: (id, photoId) => api.delete(`/profiles/${id}/photos/${photoId}`),
+  uploadPhoto: (id, formData) => api.post("/profiles/me/photos", formData),
+  deletePhoto: (id, photoId) => api.delete(`/profiles/me/photos/${photoId}`),
   getAll: (filters) => api.get("/profiles", { params: filters }),
 };
 

@@ -15,6 +15,11 @@ export function calculateAge(dob) {
 export function formatProfile(profile) {
   const user = profile.User;
   const primaryPhoto = profile.Photos?.find((photo) => photo.isPrimary) || profile.Photos?.[0];
+  const photoItems = profile.Photos?.map((photo) => ({
+    id: photo.id,
+    url: photo.url,
+    isPrimary: Boolean(photo.isPrimary),
+  })) || [];
   const isPremium = Boolean(user?.Subscriptions?.some((subscription) => (
     subscription.status === 'active'
     && subscription.endsAt
@@ -37,7 +42,8 @@ export function formatProfile(profile) {
     occupation: profile.occupation || '',
     height: profile.height || '',
     image: primaryPhoto?.url || 'https://images.unsplash.com/photo-1511367461989-f85a21fda167?ixlib=rb-4.0.3&w=400',
-    photos: profile.Photos?.map((photo) => photo.url) || [],
+    photos: photoItems.map((photo) => photo.url),
+    photoItems,
     bio: profile.bio || '',
     interests: Array.isArray(profile.interests) ? profile.interests : [],
     verified: Boolean(user?.verified),

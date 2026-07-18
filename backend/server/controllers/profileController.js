@@ -56,6 +56,89 @@ export async function updateMyProfile(req, res) {
   return res.json(formatProfile(updated));
 }
 
+export async function uploadProfilePhoto(req, res) {
+  try {
+    const profile = await Profile.findOne({
+      where: { userId: req.user.id },
+      include: [User, Photo],
+    });
+
+    if (!profile) return res.status(404).json({ message: 'Profile not found' });
+    if (req.params.id && String(profile.id) !== String(req.params.id)) {
+      return res.status(403).json({ message: 'You can upload photos only for your own profile' });
+    }
+
+    const photo = req.files?.photo;
+    if (!photo?.buffer) {
+      return res.status(400).json({ message: 'Please select a profile photo' });
+    }
+
+    if (!photo.contentType?.startsWith('image/')) {
+      return res.status(400).json({ message: 'Only image files are allowed' });
+    }
+
+    const url = `data:${photo.contentType};base64,${photo.buffer.toString('base64')}`;
+
+    await Photo.update({ isPrimary: false }, { where: { profileId: profile.id } });
+    await Photo.create({
+      profileId: profile.id,
+      url,
+      isPrimary: true,
+    });
+
+    const updated = await Profile.findByPk(profile.id, { include: [User, Photo] });
+    return res.status(201).json(formatProfile(updated));
+  } catch (error) {
+    console.error('Upload profile photo failed:', error);
+    if (/Data too long/i.test(error.message || '')) {
+      return res.status(400).json({
+        message: 'Photo column is too small. Run the Photos.url MEDIUMTEXT query from QUICK_START.md.',
+      });
+    }
+    return res.status(500).json({ message: 'Could not upload profile photo' });
+  }
+}
+
+export async function deleteProfilePhoto(req, res) {
+  try {
+    const profile = await Profile.findOne({
+      where: { userId: req.user.id },
+      include: [User, Photo],
+    });
+
+    if (!profile) return res.status(404).json({ message: 'Profile not found' });
+    if (req.params.id && String(profile.id) !== String(req.params.id)) {
+      return res.status(403).json({ message: 'You can delete photos only for your own profile' });
+    }
+
+    const photo = await Photo.findOne({
+      where: {
+        id: req.params.photoId,
+        profileId: profile.id,
+      },
+    });
+
+    if (!photo) return res.status(404).json({ message: 'Photo not found' });
+
+    const wasPrimary = Boolean(photo.isPrimary);
+    await photo.destroy();
+
+    if (wasPrimary) {
+      const nextPhoto = await Photo.findOne({
+        where: { profileId: profile.id },
+        order: [['createdAt', 'DESC']],
+      });
+      if (nextPhoto) await nextPhoto.update({ isPrimary: true });
+    }
+
+    const updated = await Profile.findByPk(profile.id, { include: [User, Photo] });
+    return res.json(formatProfile(updated));
+  } catch (error) {
+    console.error('Delete profile photo failed:', error);
+    return res.status(500).json({ message: 'Could not delete profile photo' });
+  }
+}
+
 export async function getProfileById(req, res) {
   try {
     const profile = await Profile.findByPk(req.params.id, {

@@ -9,10 +9,12 @@ import {
   verifyOtp,
 } from '../controllers/authController.js';
 import {
+  deleteProfilePhoto,
   getMyProfile,
   getProfileById,
   getProfiles,
   updateMyProfile,
+  uploadProfilePhoto,
 } from '../controllers/profileController.js';
 import {
   getLikes,
@@ -69,6 +71,10 @@ router.get('/auth/me', authRequired, getMe);
 
 router.get('/profiles/me', authRequired, getMyProfile);
 router.put('/profiles/me', authRequired, updateMyProfile);
+router.post('/profiles/me/photos', authRequired, multipartForm, uploadProfilePhoto);
+router.post('/profiles/:id/photos', authRequired, multipartForm, uploadProfilePhoto);
+router.delete('/profiles/me/photos/:photoId', authRequired, deleteProfilePhoto);
+router.delete('/profiles/:id/photos/:photoId', authRequired, deleteProfilePhoto);
 router.get('/profiles/:id', authRequired, getProfileById);
 router.get('/profiles', authRequired, getProfiles);
 

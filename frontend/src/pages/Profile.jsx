@@ -3,6 +3,42 @@ import { Upload, Save, Mail, MapPin, Heart } from 'lucide-react';
 import { profileService } from '../services/api';
 import './Profile.css';
 
+const resizeProfilePhoto = (file) => new Promise((resolve, reject) => {
+  if (!file.type.startsWith('image/')) {
+    reject(new Error('Only image files are allowed'));
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    const image = new Image();
+    image.onload = () => {
+      const maxSize = 700;
+      const scale = Math.min(1, maxSize / Math.max(image.width, image.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(image.width * scale));
+      canvas.height = Math.max(1, Math.round(image.height * scale));
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            reject(new Error('Could not prepare image'));
+            return;
+          }
+          resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' }));
+        },
+        'image/jpeg',
+        0.82,
+      );
+    };
+    image.onerror = () => reject(new Error('Could not read image'));
+    image.src = reader.result;
+  };
+  reader.onerror = () => reject(new Error('Could not read image'));
+  reader.readAsDataURL(file);
+});
+
 const Profile = () => {
   const defaultProfile = {
     fullName: 'Your Name',
@@ -27,11 +63,21 @@ const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState(defaultProfile);
   const [isLoading, setIsLoading] = useState(true);
+  const [isPhotoUploading, setIsPhotoUploading] = useState(false);
   const [error, setError] = useState('');
 
   const normalizeProfile = (data) => {
-    const photos = Array.isArray(data.photos) && data.photos.length
-      ? data.photos
+    const photoItems = Array.isArray(data.photoItems) && data.photoItems.length
+      ? data.photoItems
+      : Array.isArray(data.photos) && data.photos.length
+        ? data.photos.map((url, idx) => ({ id: null, url, isPrimary: idx === 0 }))
+        : data.image
+          ? [{ id: null, url: data.image, isPrimary: true }]
+          : [];
+    const photos = photoItems.length
+      ? photoItems.map((photo) => photo.url)
+      : Array.isArray(data.photos) && data.photos.length
+        ? data.photos
       : data.image
         ? [data.image]
         : defaultProfile.photos;
@@ -41,6 +87,7 @@ const Profile = () => {
       ...data,
       fullName: data.name || data.fullName || defaultProfile.fullName,
       photos,
+      photoItems,
     };
   };
 
@@ -88,6 +135,47 @@ const Profile = () => {
     }
   };
 
+  const handlePhotoUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!profile.id) {
+      alert('Profile is still loading. Please try again.');
+      event.target.value = '';
+      return;
+    }
+
+    try {
+      setIsPhotoUploading(true);
+      const preparedFile = await resizeProfilePhoto(file);
+      const formData = new FormData();
+      formData.append('photo', preparedFile);
+
+      const response = await profileService.uploadPhoto(profile.id, formData);
+      const nextProfile = normalizeProfile(response.data);
+      setProfile(nextProfile);
+      setEditData(nextProfile);
+    } catch (err) {
+      alert(err.response?.data?.message || err.message || 'Could not upload profile photo.');
+    } finally {
+      setIsPhotoUploading(false);
+      event.target.value = '';
+    }
+  };
+
+  const handlePhotoDelete = async (photoId) => {
+    if (!photoId) return;
+
+    try {
+      const response = await profileService.deletePhoto(profile.id, photoId);
+      const nextProfile = normalizeProfile(response.data);
+      setProfile(nextProfile);
+      setEditData(nextProfile);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Could not delete photo.');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="profile-container">
@@ -126,16 +214,35 @@ const Profile = () => {
           <div className="photos-section">
             <h2>📸 My Photos</h2>
             <div className="photos-grid">
-              {(profile.photos || []).map((photo, idx) => (
-                <div key={idx} className="photo-item">
-                  <img src={photo} alt={`Photo ${idx + 1}`} />
-                  <button className="delete-photo-btn">✕</button>
+              {(profile.photoItems?.length
+                ? profile.photoItems
+                : (profile.photos || []).map((url, idx) => ({ id: null, url, isPrimary: idx === 0 }))
+              ).map((photo, idx) => (
+                <div key={photo.id || photo.url || idx} className="photo-item">
+                  <img src={photo.url} alt={`Photo ${idx + 1}`} />
+                  {photo.isPrimary && <span className="primary-photo-badge">Primary</span>}
+                  {photo.id && (
+                    <button
+                      type="button"
+                      className="delete-photo-btn"
+                      onClick={() => handlePhotoDelete(photo.id)}
+                      aria-label="Delete photo"
+                    >
+                      ×
+                    </button>
+                  )}
                 </div>
               ))}
-              <div className="add-photo-btn">
+              <label className={`add-photo-btn ${isPhotoUploading ? 'uploading' : ''}`}>
                 <Upload size={40} />
-                <p>Add Photo</p>
-              </div>
+                <p>{isPhotoUploading ? 'Uploading...' : 'Add Photo'}</p>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoUpload}
+                  disabled={isPhotoUploading}
+                />
+              </label>
             </div>
           </div>
 

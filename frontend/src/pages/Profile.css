@@ -101,6 +101,18 @@
   justify-content: center;
 }
 
+.primary-photo-badge {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  padding: 0.2rem 0.45rem;
+  border-radius: 6px;
+  background-color: rgba(44, 62, 80, 0.86);
+  color: white;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
 .add-photo-btn {
   width: 120px;
   height: 120px;
@@ -114,9 +126,18 @@
   transition: all 0.3s ease;
 }
 
+.add-photo-btn input {
+  display: none;
+}
+
 .add-photo-btn:hover {
   border-color: #e74c3c;
   background-color: #ffeaea;
+}
+
+.add-photo-btn.uploading {
+  cursor: wait;
+  opacity: 0.75;
 }
 
 .add-photo-btn svg {
