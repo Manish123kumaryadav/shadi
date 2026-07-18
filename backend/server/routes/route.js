@@ -42,6 +42,7 @@ import {
   getMyPremium,
   getPremiumPlans,
   startPremiumCheckout,
+  createPremiumSupportTicket,
   verifyPremiumPayment,
 } from '../controllers/premiumController.js';
 
@@ -83,6 +84,7 @@ router.get('/premium/plans', authRequired, getPremiumPlans);
 router.get('/premium/me', authRequired, getMyPremium);
 router.post('/premium/checkout', authRequired, startPremiumCheckout);
 router.post('/premium/verify', authRequired, verifyPremiumPayment);
+router.post('/premium/support', authRequired, createPremiumSupportTicket);
 
 router.post('/messages/start/:profileId', authRequired, startConversation);
 router.get('/messages/conversations', authRequired, getConversations);

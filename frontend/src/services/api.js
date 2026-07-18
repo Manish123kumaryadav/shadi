@@ -78,6 +78,7 @@ export const premiumService = {
   getStatus: () => api.get("/premium/me"),
   checkout: (planId) => api.post("/premium/checkout", { planId }),
   verify: (payload) => api.post("/premium/verify", payload),
+  support: (payload) => api.post("/premium/support", payload),
 };
 
 // Messaging Services

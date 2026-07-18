@@ -11,6 +11,7 @@ import Message from './Message.js';
 import PremiumPlan from './PremiumPlan.js';
 import Subscription from './Subscription.js';
 import Payment from './Payment.js';
+import SupportTicket from './SupportTicket.js';
 
 Role.hasMany(User, { foreignKey: 'roleId' });
 User.belongsTo(Role, { foreignKey: 'roleId' });
@@ -70,6 +71,9 @@ Payment.belongsTo(User, { foreignKey: 'userId' });
 Subscription.hasMany(Payment, { foreignKey: 'subscriptionId' });
 Payment.belongsTo(Subscription, { foreignKey: 'subscriptionId' });
 
+User.hasMany(SupportTicket, { foreignKey: 'userId' });
+SupportTicket.belongsTo(User, { foreignKey: 'userId' });
+
 export {
   sequelize,
   Role,
@@ -84,6 +88,7 @@ export {
   PremiumPlan,
   Subscription,
   Payment,
+  SupportTicket,
 };
 
 export default sequelize;

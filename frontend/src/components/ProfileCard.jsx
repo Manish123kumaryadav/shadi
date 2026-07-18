@@ -17,6 +17,9 @@ const ProfileCard = ({ profile, onLike, onPass, onMessage, onViewProfile }) => {
             <span>✓ Verified</span>
           </div>
         )}
+        {profile.isPremium && (
+          <div className="premium-profile-badge">Premium</div>
+        )}
         <div className="online-status"></div>
       </div>
 

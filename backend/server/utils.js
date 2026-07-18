@@ -15,6 +15,11 @@ export function calculateAge(dob) {
 export function formatProfile(profile) {
   const user = profile.User;
   const primaryPhoto = profile.Photos?.find((photo) => photo.isPrimary) || profile.Photos?.[0];
+  const isPremium = Boolean(user?.Subscriptions?.some((subscription) => (
+    subscription.status === 'active'
+    && subscription.endsAt
+    && new Date(subscription.endsAt).getTime() >= Date.now()
+  )));
 
   return {
     id: profile.id,
@@ -36,6 +41,7 @@ export function formatProfile(profile) {
     bio: profile.bio || '',
     interests: Array.isArray(profile.interests) ? profile.interests : [],
     verified: Boolean(user?.verified),
+    isPremium,
   };
 }
 

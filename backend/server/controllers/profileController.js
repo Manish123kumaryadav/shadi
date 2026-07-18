@@ -1,6 +1,17 @@
 import { Op } from 'sequelize';
-import { User, Profile, Photo, ProfileView } from '../models/index.js';
+import { User, Profile, Photo, ProfileView, Subscription } from '../models/index.js';
 import { formatProfile } from '../utils.js';
+
+function activeSubscriptionInclude() {
+  return {
+    model: Subscription,
+    required: false,
+    where: {
+      status: 'active',
+      endsAt: { [Op.gte]: new Date() },
+    },
+  };
+}
 
 export async function getMyProfile(req, res) {
   const profile = await Profile.findOne({
@@ -48,7 +59,7 @@ export async function updateMyProfile(req, res) {
 export async function getProfileById(req, res) {
   try {
     const profile = await Profile.findByPk(req.params.id, {
-      include: [User, Photo],
+      include: [{ model: User, include: [activeSubscriptionInclude()] }, Photo],
     });
 
     if (!profile) return res.status(404).json({ message: 'Profile not found' });

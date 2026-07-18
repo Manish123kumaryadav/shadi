@@ -67,6 +67,11 @@ const Browse = () => {
       alert(response.data.mutual ? 'It is a match! You can start chatting.' : 'Profile liked!');
       setProfiles((prev) => prev.filter((profile) => profile.id !== id));
     } catch (err) {
+      if (err.response?.data?.code === 'LIKE_LIMIT_REACHED') {
+        const shouldUpgrade = window.confirm(`${err.response.data.message}\n\nOpen Premium plan now?`);
+        if (shouldUpgrade) navigate('/likes#premium');
+        return;
+      }
       alert(err.response?.data?.message || 'Could not like this profile.');
     }
   };

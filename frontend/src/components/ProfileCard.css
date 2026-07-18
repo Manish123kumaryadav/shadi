@@ -61,6 +61,19 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
+.premium-profile-badge {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  padding: 0.45rem 0.8rem;
+  border-radius: 999px;
+  background: #fff;
+  color: #c0392b;
+  font-size: 0.78rem;
+  font-weight: 900;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
+}
+
 .online-status {
   position: absolute;
   bottom: 15px;

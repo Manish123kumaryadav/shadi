@@ -126,6 +126,18 @@ const Likes = () => {
     }
   };
 
+  const handlePrioritySupport = async () => {
+    try {
+      const response = await premiumService.support({
+        subject: 'Premium support request',
+        message: 'Please contact me for premium account support.',
+      });
+      setUpgradeMessage(response.data.message || 'Priority support request created.');
+    } catch (error) {
+      setUpgradeMessage(error.response?.data?.message || 'Could not create support request.');
+    }
+  };
+
   const removeProfileFromLists = (id) => {
     setLikes((prev) => prev.filter((profile) => profile.id !== id));
     setLikedProfiles((prev) => prev.filter((profile) => profile.id !== id));
@@ -138,6 +150,11 @@ const Likes = () => {
       alert(response.data.mutual ? 'It is a match! You can start chatting.' : 'Profile liked!');
       removeProfileFromLists(id);
     } catch (error) {
+      if (error.response?.data?.code === 'LIKE_LIMIT_REACHED') {
+        const shouldUpgrade = window.confirm(`${error.response.data.message}\n\nOpen Premium plan now?`);
+        if (shouldUpgrade) navigate('/likes#premium');
+        return;
+      }
       alert(error.response?.data?.message || 'Could not like this profile.');
     }
   };
@@ -177,6 +194,7 @@ const Likes = () => {
           <div className="like-image">
             <img src={profile.image} alt={profile.name} onClick={() => handleViewProfile(profile.id)} />
             {profile.verified && <div className="verified-badge">✓ Verified</div>}
+            {profile.isPremium && <div className="premium-like-badge">Premium</div>}
           </div>
 
           <div className="like-info">
@@ -292,7 +310,12 @@ const Likes = () => {
             </ul>
           </div>
           {premiumStatus.isPremium ? (
-            <button className="btn btn-primary" disabled>Active</button>
+            <div className="premium-active-actions">
+              <button className="btn btn-primary" disabled>Active</button>
+              <button className="premium-support-btn" type="button" onClick={handlePrioritySupport}>
+                Priority Support
+              </button>
+            </div>
           ) : (
             <div className="premium-plans">
               {plans.length ? (

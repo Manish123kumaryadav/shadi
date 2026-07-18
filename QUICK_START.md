@@ -363,6 +363,27 @@ CREATE TABLE IF NOT EXISTS `ProfileViews` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ```
 
+For Premium priority support, create the support tickets table:
+
+```sql
+CREATE TABLE IF NOT EXISTS `SupportTickets` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `subject` VARCHAR(255) NOT NULL,
+  `message` TEXT NOT NULL,
+  `priority` VARCHAR(255) NOT NULL DEFAULT 'premium',
+  `status` ENUM('open', 'in_progress', 'resolved') NOT NULL DEFAULT 'open',
+  `userId` INT NULL,
+  `createdAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `support_tickets_user_id_idx` (`userId`),
+  KEY `support_tickets_status_idx` (`status`),
+  CONSTRAINT `support_tickets_user_fk`
+    FOREIGN KEY (`userId`) REFERENCES `Users` (`id`)
+    ON UPDATE CASCADE ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
 ---
 
 ## 🔐 Environment Variables

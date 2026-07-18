@@ -11,6 +11,7 @@ import {
   Subscription,
   User,
   Payment,
+  SupportTicket,
 } from '../models/index.js';
 
 const tableRegistry = {
@@ -23,6 +24,7 @@ const tableRegistry = {
   premiumplans: PremiumPlan,
   subscriptions: Subscription,
   payments: Payment,
+  supporttickets: SupportTicket,
   conversations: Conversation,
   conversationmembers: ConversationMember,
   messages: Message,
@@ -38,6 +40,7 @@ const sectionRegistry = {
   premiumplans: { table: 'premiumplans', label: 'Premium Plans', description: 'Premium plan catalogue' },
   subscriptions: { table: 'subscriptions', label: 'Subscriptions', description: 'User premium subscription records' },
   payments: { table: 'payments', label: 'Payments', description: 'Premium payment transactions' },
+  supporttickets: { table: 'supporttickets', label: 'Support Tickets', description: 'Premium support requests' },
   conversations: { table: 'conversations', label: 'Conversations', description: 'Chat conversation records' },
   conversationmembers: { table: 'conversationmembers', label: 'Conversation Members', description: 'Conversation participant records' },
   messages: { table: 'messages', label: 'Messages', description: 'Chat messages' },

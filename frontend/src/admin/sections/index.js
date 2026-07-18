@@ -10,6 +10,7 @@ import MessagesSection from './MessagesSection';
 import PremiumPlansSection from './PremiumPlansSection';
 import SubscriptionsSection from './SubscriptionsSection';
 import PaymentsSection from './PaymentsSection';
+import SupportTicketsSection from './SupportTicketsSection';
 
 export const sectionComponents = {
   roles: RolesSection,
@@ -21,6 +22,7 @@ export const sectionComponents = {
   premiumplans: PremiumPlansSection,
   subscriptions: SubscriptionsSection,
   payments: PaymentsSection,
+  supporttickets: SupportTicketsSection,
   conversations: ConversationsSection,
   conversationmembers: ConversationMembersSection,
   messages: MessagesSection,

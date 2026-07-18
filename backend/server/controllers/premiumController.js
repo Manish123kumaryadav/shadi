@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import { Op } from 'sequelize';
-import { Payment, PremiumPlan, Subscription } from '../models/index.js';
+import { Payment, PremiumPlan, Subscription, SupportTicket } from '../models/index.js';
 
 const defaultPlans = [
   {
@@ -77,6 +77,7 @@ async function ensurePremiumReady() {
   await PremiumPlan.sync();
   await Subscription.sync();
   await Payment.sync();
+  await SupportTicket.sync();
 
   await PremiumPlan.bulkCreate(defaultPlans, {
     updateOnDuplicate: ['name', 'description', 'priceInr', 'durationDays', 'features', 'isActive', 'sortOrder'],
@@ -254,5 +255,37 @@ export async function verifyPremiumPayment(req, res) {
     return res.json({ message: 'Premium activated', subscription });
   } catch (error) {
     return res.status(500).json({ message: 'Could not verify payment' });
+  }
+}
+
+export async function createPremiumSupportTicket(req, res) {
+  try {
+    await ensurePremiumReady();
+    const subscription = await Subscription.findOne({
+      where: {
+        userId: req.user.id,
+        status: 'active',
+        endsAt: { [Op.gte]: new Date() },
+      },
+    });
+
+    if (!subscription) {
+      return res.status(403).json({ message: 'Priority support is available for Premium members.' });
+    }
+
+    const ticket = await SupportTicket.create({
+      userId: req.user.id,
+      subject: req.body.subject || 'Premium support request',
+      message: req.body.message || 'Please contact me for Premium support.',
+      priority: 'premium',
+      status: 'open',
+    });
+
+    return res.status(201).json({
+      message: 'Priority support request created.',
+      ticket,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: 'Could not create support request' });
   }
 }
