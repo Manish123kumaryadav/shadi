@@ -39,6 +39,7 @@ export async function register(req, res) {
     const normalizedGender = lookingFor ? gender : inferGenderFromLookingFor(normalizedLookingFor);
     const customPhotoUrl = typeof photoUrl === 'string'
       && (photoUrl.startsWith('data:image/') || photoUrl.startsWith('http'))
+      && photoUrl.length <= 1000
       ? photoUrl
       : '';
     const passwordHash = await bcrypt.hash(password, 10);

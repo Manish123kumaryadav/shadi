@@ -88,17 +88,30 @@ const Register = () => {
     const image = new Image();
     image.onload = () => {
       const canvas = document.createElement('canvas');
-      const maxSize = 520;
-      const scale = Math.min(1, maxSize / Math.max(image.width, image.height));
-      canvas.width = Math.round(image.width * scale);
-      canvas.height = Math.round(image.height * scale);
+      const avatarSize = 32;
+      const sourceSize = Math.min(image.width, image.height);
+      const sourceX = Math.max(0, Math.round((image.width - sourceSize) / 2));
+      const sourceY = Math.max(0, Math.round((image.height - sourceSize) / 2));
+      canvas.width = avatarSize;
+      canvas.height = avatarSize;
 
       const context = canvas.getContext('2d');
-      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      context.drawImage(
+        image,
+        sourceX,
+        sourceY,
+        sourceSize,
+        sourceSize,
+        0,
+        0,
+        avatarSize,
+        avatarSize,
+      );
+      const photoUrl = canvas.toDataURL('image/jpeg', 0.58);
 
       setFormData((prev) => ({
         ...prev,
-        photoUrl: canvas.toDataURL('image/jpeg', 0.82),
+        photoUrl,
       }));
       setErrors((prev) => ({ ...prev, photoUrl: '', form: '' }));
       URL.revokeObjectURL(image.src);
