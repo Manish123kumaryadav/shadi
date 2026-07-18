@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import dns from 'node:dns';
 
 function envValue(key, fallback = '') {
   return String(process.env[key] || fallback).trim().replace(/^"|"$/g, '');
@@ -16,6 +17,9 @@ function createTransporter() {
     port: Number(envValue('SMTP_PORT', '587')),
     secure: envValue('SMTP_SECURE') === 'true',
     family: 4,
+    lookup: (hostname, options, callback) => {
+      dns.lookup(hostname, { ...options, family: 4 }, callback);
+    },
     auth: {
       user: envValue('SMTP_USER'),
       pass: envValue('SMTP_PASS'),
