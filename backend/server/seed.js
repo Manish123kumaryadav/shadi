@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import { Role, User, Profile, Photo } from './models/index.js';
+import { Role, User, Profile, Photo, PremiumPlan } from './models/index.js';
 
 const seedProfiles = [
   ['Priya Sharma', 'priya@example.com', '9000000001', 'female', 'male', '1999-02-10', 'Mumbai, India', 'Hindu', 'Brahmin', 'MBA', 'Software Engineer', '5\'6"', 'Passionate about technology and travel. Looking for someone who values family and personal growth.', ['Travel', 'Cooking', 'Reading', 'Yoga'], 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&w=400'],
@@ -32,6 +32,21 @@ export async function seedDatabase() {
     { id: 2, name: 'user' },
   ], {
     updateOnDuplicate: ['name'],
+  });
+
+  await PremiumPlan.bulkCreate([
+    {
+      key: 'premium_monthly',
+      name: 'Premium Plan',
+      description: 'Unlock advanced discovery and unlimited connection actions.',
+      priceInr: 499,
+      durationDays: 30,
+      features: ['See all likes received', 'See profile visitors', 'Unlimited likes', 'Priority profile visibility'],
+      isActive: true,
+      sortOrder: 1,
+    },
+  ], {
+    updateOnDuplicate: ['name', 'description', 'priceInr', 'durationDays', 'features', 'isActive', 'sortOrder'],
   });
 
   for (const item of seedProfiles) {

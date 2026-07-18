@@ -29,16 +29,27 @@ const Profile = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const normalizeProfile = (data) => {
+    const photos = Array.isArray(data.photos) && data.photos.length
+      ? data.photos
+      : data.image
+        ? [data.image]
+        : defaultProfile.photos;
+
+    return {
+      ...defaultProfile,
+      ...data,
+      fullName: data.name || data.fullName || defaultProfile.fullName,
+      photos,
+    };
+  };
+
   useEffect(() => {
     const loadProfile = async () => {
       try {
         setIsLoading(true);
         const response = await profileService.getMe();
-        const nextProfile = {
-          ...defaultProfile,
-          ...response.data,
-          fullName: response.data.name,
-        };
+        const nextProfile = normalizeProfile(response.data);
         setProfile(nextProfile);
         setEditData(nextProfile);
       } catch (err) {
@@ -67,11 +78,7 @@ const Profile = () => {
           ? editData.interests
           : String(editData.interests).split(',').map((item) => item.trim()).filter(Boolean),
       });
-      const nextProfile = {
-        ...defaultProfile,
-        ...response.data,
-        fullName: response.data.name,
-      };
+      const nextProfile = normalizeProfile(response.data);
       setProfile(nextProfile);
       setEditData(nextProfile);
       setIsEditing(false);

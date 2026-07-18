@@ -1,38 +1,165 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Heart, Eye } from 'lucide-react';
-import { matchService } from '../services/api';
+import { matchService, messageService, premiumService, profileService } from '../services/api';
 import './Likes.css';
 
+function loadRazorpayCheckout() {
+  return new Promise((resolve, reject) => {
+    if (window.Razorpay) {
+      resolve(true);
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.onload = () => resolve(true);
+    script.onerror = () => reject(new Error('Could not load payment gateway'));
+    document.body.appendChild(script);
+  });
+}
+
 const Likes = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('likes');
   const [likes, setLikes] = useState([]);
   const [views, setViews] = useState([]);
+  const [plans, setPlans] = useState([]);
+  const [premiumStatus, setPremiumStatus] = useState({ isPremium: false, subscription: null });
   const [isLoading, setIsLoading] = useState(true);
+  const [isUpgrading, setIsUpgrading] = useState(false);
+  const [upgradeMessage, setUpgradeMessage] = useState('');
+  const [connectionError, setConnectionError] = useState('');
 
   useEffect(() => {
     const loadConnections = async () => {
       try {
         setIsLoading(true);
+        setConnectionError('');
         const [likesResponse, viewsResponse] = await Promise.all([
           matchService.getLikes(),
           matchService.getViews(),
         ]);
         setLikes(likesResponse.data);
         setViews(viewsResponse.data);
+      } catch (error) {
+        setConnectionError(error.response?.data?.message || 'Could not load connections.');
       } finally {
         setIsLoading(false);
       }
     };
 
+    const loadPremium = async () => {
+      try {
+        const [plansResponse, premiumResponse] = await Promise.all([
+          premiumService.getPlans(),
+          premiumService.getStatus(),
+        ]);
+        setPlans(plansResponse.data);
+        setPremiumStatus(premiumResponse.data);
+      } catch (error) {
+        setUpgradeMessage(error.response?.data?.message || 'Premium plans are not available yet.');
+      }
+    };
+
     loadConnections();
+    loadPremium();
   }, []);
+
+  const refreshPremiumStatus = async () => {
+    const response = await premiumService.getStatus();
+    setPremiumStatus(response.data);
+  };
+
+  const handlePremiumCheckout = async (planId) => {
+    try {
+      setIsUpgrading(true);
+      setUpgradeMessage('');
+      const response = await premiumService.checkout(planId);
+
+      if (response.data.provider === 'demo') {
+        setUpgradeMessage(response.data.message);
+        await refreshPremiumStatus();
+        return;
+      }
+
+      await loadRazorpayCheckout();
+
+      const checkout = new window.Razorpay({
+        key: response.data.keyId,
+        amount: response.data.amount,
+        currency: response.data.currency,
+        name: response.data.name,
+        description: response.data.description,
+        order_id: response.data.orderId,
+        prefill: response.data.prefill,
+        handler: async (paymentResponse) => {
+          await premiumService.verify(paymentResponse);
+          setUpgradeMessage('Premium activated successfully.');
+          await refreshPremiumStatus();
+        },
+        modal: {
+          ondismiss: () => setUpgradeMessage('Payment cancelled.'),
+        },
+      });
+
+      checkout.open();
+    } catch (error) {
+      setUpgradeMessage(error.response?.data?.message || error.message || 'Could not start premium upgrade.');
+    } finally {
+      setIsUpgrading(false);
+    }
+  };
+
+  const removeProfileFromLists = (id) => {
+    setLikes((prev) => prev.filter((profile) => profile.id !== id));
+    setViews((prev) => prev.filter((profile) => profile.id !== id));
+  };
+
+  const handleLikeBack = async (id) => {
+    try {
+      const response = await matchService.like(id);
+      alert(response.data.mutual ? 'It is a match! You can start chatting.' : 'Profile liked!');
+      removeProfileFromLists(id);
+    } catch (error) {
+      alert(error.response?.data?.message || 'Could not like this profile.');
+    }
+  };
+
+  const handlePassProfile = async (id) => {
+    try {
+      await matchService.pass(id);
+      removeProfileFromLists(id);
+    } catch (error) {
+      alert(error.response?.data?.message || 'Could not pass this profile.');
+    }
+  };
+
+  const handleMessageProfile = async (id) => {
+    try {
+      const response = await messageService.startConversation(id);
+      navigate('/messages', { state: { conversationId: response.data.id } });
+    } catch (error) {
+      alert(error.response?.data?.message || 'Could not open chat.');
+    }
+  };
+
+  const handleViewProfile = async (id) => {
+    try {
+      const response = await profileService.getProfile(id);
+      const profile = response.data;
+      alert(`${profile.name}, ${profile.age}\n${profile.location}\n${profile.bio || 'No bio yet.'}`);
+    } catch (error) {
+      alert(error.response?.data?.message || 'Could not open profile.');
+    }
+  };
 
   const renderProfiles = (profiles) => (
     <div className="profiles-grid">
       {profiles.map((profile) => (
         <div key={profile.id} className="like-card">
           <div className="like-image">
-            <img src={profile.image} alt={profile.name} />
+            <img src={profile.image} alt={profile.name} onClick={() => handleViewProfile(profile.id)} />
             {profile.verified && <div className="verified-badge">✓ Verified</div>}
           </div>
 
@@ -49,9 +176,9 @@ const Likes = () => {
           </div>
 
           <div className="like-actions">
-            <button className="action-btn pass">✕</button>
-            <button className="action-btn message">💬</button>
-            <button className="action-btn like">❤️</button>
+            <button className="action-btn pass" onClick={() => handlePassProfile(profile.id)}>✕</button>
+            <button className="action-btn message" onClick={() => handleMessageProfile(profile.id)}>💬</button>
+            <button className="action-btn like" onClick={() => handleLikeBack(profile.id)}>❤️</button>
           </div>
         </div>
       ))}
@@ -81,6 +208,8 @@ const Likes = () => {
       </div>
 
       <div className="tab-content">
+        {connectionError && <div className="alert alert-error">{connectionError}</div>}
+
         {isLoading && (
           <div className="no-profiles">
             <div className="spinner"></div>
@@ -104,15 +233,44 @@ const Likes = () => {
       </div>
 
       {/* Premium Upgrade */}
-      <div className="premium-section">
+      <div className="premium-section" id="premium">
         <div className="premium-card">
           <div className="premium-content">
-            <span className="premium-badge">✨ PREMIUM</span>
-            <h3>Unlock Full Features</h3>
-            <p>See who likes you, get unlimited likes, and much more!</p>
+            <span className="premium-badge">PREMIUM</span>
+            <h3>{premiumStatus.isPremium ? 'Premium Active' : 'Unlock Full Features'}</h3>
+            <p>
+              {premiumStatus.isPremium
+                ? `Your plan is active until ${new Date(premiumStatus.subscription.endsAt).toLocaleDateString()}.`
+                : 'See who likes you, track profile visitors, get unlimited likes, and improve visibility.'}
+            </p>
           </div>
-          <button className="btn btn-primary">Upgrade to Premium</button>
+          {premiumStatus.isPremium ? (
+            <button className="btn btn-primary" disabled>Active</button>
+          ) : (
+            <div className="premium-plans">
+              {plans.length ? (
+                plans.map((plan) => (
+                  <button
+                    key={plan.id}
+                    className="premium-plan-btn"
+                    type="button"
+                    disabled={isUpgrading}
+                    onClick={() => handlePremiumCheckout(plan.id)}
+                  >
+                    <strong>{plan.name}</strong>
+                    <span>Rs. {plan.priceInr} / {plan.durationDays} days</span>
+                  </button>
+                ))
+              ) : (
+                <button className="premium-plan-btn" type="button" disabled>
+                  <strong>Premium Plan</strong>
+                  <span>Loading Rs. 499 plan...</span>
+                </button>
+              )}
+            </div>
+          )}
         </div>
+        {upgradeMessage && <p className="upgrade-message">{upgradeMessage}</p>}
       </div>
     </div>
   );

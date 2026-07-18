@@ -267,6 +267,53 @@
   margin-left: 2rem;
 }
 
+.premium-plans {
+  min-width: 320px;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.premium-plan-btn {
+  min-height: 58px;
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.premium-plan-btn:hover {
+  background: rgba(255, 255, 255, 0.24);
+  transform: translateY(-1px);
+}
+
+.premium-plan-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.premium-plan-btn strong,
+.premium-plan-btn span {
+  display: block;
+}
+
+.premium-plan-btn span {
+  margin-top: 0.2rem;
+  opacity: 0.88;
+  font-size: 0.9rem;
+}
+
+.upgrade-message {
+  margin: 0.75rem 0 0;
+  color: #2c3e50;
+  font-weight: 700;
+  text-align: center;
+}
+
 @media (max-width: 768px) {
   .profiles-grid {
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -290,6 +337,11 @@
 
   .premium-card .btn {
     margin-left: 0;
+    width: 100%;
+  }
+
+  .premium-plans {
+    min-width: 0;
     width: 100%;
   }
 }

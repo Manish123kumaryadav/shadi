@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ProfileCard from '../components/ProfileCard';
 import { ChevronLeft, ChevronRight, Filter, Zap } from 'lucide-react';
-import { matchService, messageService } from '../services/api';
+import { matchService, messageService, profileService } from '../services/api';
 import './Browse.css';
 
 const PROFILE_FETCH_LIMIT = 500;
@@ -21,6 +21,22 @@ const Browse = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [stats, setStats] = useState({ likes: 0, views: 0 });
+
+  const loadStats = async () => {
+    try {
+      const [likesResponse, viewsResponse] = await Promise.all([
+        matchService.getLikes(),
+        matchService.getViews(),
+      ]);
+      setStats({
+        likes: likesResponse.data.length,
+        views: viewsResponse.data.length,
+      });
+    } catch (err) {
+      setStats({ likes: 0, views: 0 });
+    }
+  };
 
   const loadMatches = async (activeFilters = filters) => {
     try {
@@ -33,6 +49,7 @@ const Browse = () => {
       });
       setProfiles(response.data);
       setCurrentSlide(0);
+      loadStats();
     } catch (err) {
       setError(err.response?.data?.message || 'Could not load matches.');
     } finally {
@@ -72,8 +89,14 @@ const Browse = () => {
     }
   };
 
-  const handleViewProfile = (id) => {
-    alert(`👀 Viewing full profile #${id}`);
+  const handleViewProfile = async (id) => {
+    try {
+      const response = await profileService.getProfile(id);
+      const profile = response.data;
+      alert(`${profile.name}, ${profile.age}\n${profile.location}\n${profile.bio || 'No bio yet.'}`);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Could not open profile.');
+    }
   };
 
   const handleFilterChange = (e) => {
@@ -270,7 +293,7 @@ const Browse = () => {
             <span>❤️</span>
             <div>
               <h4>Total Likes</h4>
-              <p>12</p>
+              <p>{stats.likes}</p>
             </div>
           </div>
 
@@ -278,7 +301,7 @@ const Browse = () => {
             <span>👁️</span>
             <div>
               <h4>Profile Views</h4>
-              <p>28</p>
+              <p>{stats.views}</p>
             </div>
           </div>
         </div>

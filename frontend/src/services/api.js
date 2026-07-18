@@ -72,6 +72,13 @@ export const matchService = {
   getViews: () => api.get("/matches/views"),
 };
 
+export const premiumService = {
+  getPlans: () => api.get("/premium/plans"),
+  getStatus: () => api.get("/premium/me"),
+  checkout: (planId) => api.post("/premium/checkout", { planId }),
+  verify: (payload) => api.post("/premium/verify", payload),
+};
+
 // Messaging Services
 export const messageService = {
   startConversation: (profileId) => api.post(`/messages/start/${profileId}`),

@@ -1,5 +1,7 @@
 import {
   Activity,
+  BadgeIndianRupee,
+  Crown,
   Database,
   Eye,
   Heart,
@@ -18,6 +20,9 @@ export const adminSections = [
   { key: 'photos', label: 'Photos', icon: Image },
   { key: 'likes', label: 'Likes', icon: Heart },
   { key: 'profileviews', label: 'Profile Views', icon: Eye },
+  { key: 'premiumplans', label: 'Premium Plans', icon: Crown },
+  { key: 'subscriptions', label: 'Subscriptions', icon: BadgeIndianRupee },
+  { key: 'payments', label: 'Payments', icon: Database },
   { key: 'conversations', label: 'Conversations', icon: Activity },
   { key: 'conversationmembers', label: 'Conversation Members', icon: Database },
   { key: 'messages', label: 'Messages', icon: MessageSquare },

@@ -37,6 +37,12 @@ import {
   getAdminSection,
   getAdminTable,
 } from '../controllers/adminController.js';
+import {
+  getMyPremium,
+  getPremiumPlans,
+  startPremiumCheckout,
+  verifyPremiumPayment,
+} from '../controllers/premiumController.js';
 
 const router = express.Router();
 
@@ -70,6 +76,11 @@ router.post('/matches/:profileId/unlike', authRequired, unlikeProfile);
 router.post('/matches/:profileId/pass', authRequired, passProfile);
 router.get('/matches/likes', authRequired, getLikes);
 router.get('/matches/views', authRequired, getViews);
+
+router.get('/premium/plans', authRequired, getPremiumPlans);
+router.get('/premium/me', authRequired, getMyPremium);
+router.post('/premium/checkout', authRequired, startPremiumCheckout);
+router.post('/premium/verify', authRequired, verifyPremiumPayment);
 
 router.post('/messages/start/:profileId', authRequired, startConversation);
 router.get('/messages/conversations', authRequired, getConversations);

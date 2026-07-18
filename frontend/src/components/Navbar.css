@@ -109,6 +109,20 @@
   padding: 0.45rem 0.9rem;
 }
 
+.premium-nav-link {
+  background: #fff;
+  color: #c0392b;
+  border-color: #fff;
+  font-weight: 800;
+}
+
+.premium-nav-link:hover,
+.premium-nav-link.active {
+  background: #ffe9df;
+  color: #a52d22;
+  border-color: #fff;
+}
+
 
 .register-link:hover {
   background-color: white;

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Menu, X, Heart, MessageCircle, User, LogOut, Home, Search } from 'lucide-react';
+import { Crown, Menu, X, Heart, MessageCircle, User, LogOut, Home, Search } from 'lucide-react';
 import './Navbar.css';
 
 const Navbar = ({ isLoggedIn, onLogout }) => {
@@ -62,6 +62,16 @@ const Navbar = ({ isLoggedIn, onLogout }) => {
                   onClick={() => setIsOpen(false)}
                 >
                   <Heart size={18} /> Likes & Views
+                </Link>
+              </li>
+
+              <li className="nav-item">
+                <Link
+                  to="/likes#premium"
+                  className={`nav-link premium-nav-link ${isActive('/likes') ? 'active' : ''}`}
+                  onClick={() => setIsOpen(false)}
+                >
+                  <Crown size={18} /> Premium ₹499
                 </Link>
               </li>
 

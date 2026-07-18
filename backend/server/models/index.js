@@ -8,6 +8,9 @@ import ProfileView from './ProfileView.js';
 import Conversation from './Conversation.js';
 import ConversationMember from './ConversationMember.js';
 import Message from './Message.js';
+import PremiumPlan from './PremiumPlan.js';
+import Subscription from './Subscription.js';
+import Payment from './Payment.js';
 
 Role.hasMany(User, { foreignKey: 'roleId' });
 User.belongsTo(Role, { foreignKey: 'roleId' });
@@ -54,6 +57,19 @@ Message.belongsTo(Message, {
   as: "ForwardedFrom",
   foreignKey: "forwardedFromMessageId",
 });
+
+PremiumPlan.hasMany(Subscription, { foreignKey: 'planId' });
+Subscription.belongsTo(PremiumPlan, { foreignKey: 'planId' });
+User.hasMany(Subscription, { foreignKey: 'userId' });
+Subscription.belongsTo(User, { foreignKey: 'userId' });
+
+PremiumPlan.hasMany(Payment, { foreignKey: 'planId' });
+Payment.belongsTo(PremiumPlan, { foreignKey: 'planId' });
+User.hasMany(Payment, { foreignKey: 'userId' });
+Payment.belongsTo(User, { foreignKey: 'userId' });
+Subscription.hasMany(Payment, { foreignKey: 'subscriptionId' });
+Payment.belongsTo(Subscription, { foreignKey: 'subscriptionId' });
+
 export {
   sequelize,
   Role,
@@ -65,6 +81,9 @@ export {
   Conversation,
   ConversationMember,
   Message,
+  PremiumPlan,
+  Subscription,
+  Payment,
 };
 
 export default sequelize;

@@ -7,6 +7,9 @@ import ProfileViewsSection from './ProfileViewsSection';
 import ConversationsSection from './ConversationsSection';
 import ConversationMembersSection from './ConversationMembersSection';
 import MessagesSection from './MessagesSection';
+import PremiumPlansSection from './PremiumPlansSection';
+import SubscriptionsSection from './SubscriptionsSection';
+import PaymentsSection from './PaymentsSection';
 
 export const sectionComponents = {
   roles: RolesSection,
@@ -15,6 +18,9 @@ export const sectionComponents = {
   photos: PhotosSection,
   likes: LikesSection,
   profileviews: ProfileViewsSection,
+  premiumplans: PremiumPlansSection,
+  subscriptions: SubscriptionsSection,
+  payments: PaymentsSection,
   conversations: ConversationsSection,
   conversationmembers: ConversationMembersSection,
   messages: MessagesSection,

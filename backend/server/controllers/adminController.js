@@ -6,8 +6,11 @@ import {
   Photo,
   Profile,
   ProfileView,
+  PremiumPlan,
   Role,
+  Subscription,
   User,
+  Payment,
 } from '../models/index.js';
 
 const tableRegistry = {
@@ -17,6 +20,9 @@ const tableRegistry = {
   photos: Photo,
   likes: Like,
   profileviews: ProfileView,
+  premiumplans: PremiumPlan,
+  subscriptions: Subscription,
+  payments: Payment,
   conversations: Conversation,
   conversationmembers: ConversationMember,
   messages: Message,
@@ -29,6 +35,9 @@ const sectionRegistry = {
   photos: { table: 'photos', label: 'Photos', description: 'Profile photo records' },
   likes: { table: 'likes', label: 'Likes', description: 'Like and pass transactions' },
   profileviews: { table: 'profileviews', label: 'Profile Views', description: 'Profile view transactions' },
+  premiumplans: { table: 'premiumplans', label: 'Premium Plans', description: 'Premium plan catalogue' },
+  subscriptions: { table: 'subscriptions', label: 'Subscriptions', description: 'User premium subscription records' },
+  payments: { table: 'payments', label: 'Payments', description: 'Premium payment transactions' },
   conversations: { table: 'conversations', label: 'Conversations', description: 'Chat conversation records' },
   conversationmembers: { table: 'conversationmembers', label: 'Conversation Members', description: 'Conversation participant records' },
   messages: { table: 'messages', label: 'Messages', description: 'Chat messages' },

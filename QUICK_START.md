@@ -217,6 +217,125 @@ Replace `mockProfiles.js` data with real API responses
 
 ---
 
+## Premium Tables SQL
+
+Run this in your MySQL database if premium tables are not created automatically in production.
+
+Note: These table names match the current Sequelize models: `PremiumPlans`, `Subscriptions`, and `Payments`. If your existing DB uses lowercase table names, rename them consistently in these queries and in the app config/model table names.
+
+```sql
+CREATE TABLE IF NOT EXISTS `PremiumPlans` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `key` VARCHAR(255) NOT NULL,
+  `name` VARCHAR(255) NOT NULL,
+  `description` VARCHAR(255) NULL,
+  `priceInr` INT NOT NULL DEFAULT 0,
+  `durationDays` INT NOT NULL DEFAULT 30,
+  `features` JSON NULL,
+  `isActive` TINYINT(1) NOT NULL DEFAULT 1,
+  `sortOrder` INT NULL DEFAULT 0,
+  `createdAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `premium_plans_key_unique` (`key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `Subscriptions` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `status` ENUM('pending', 'active', 'expired', 'cancelled') NOT NULL DEFAULT 'pending',
+  `startsAt` DATETIME NULL,
+  `endsAt` DATETIME NULL,
+  `provider` VARCHAR(255) NULL DEFAULT 'manual',
+  `providerOrderId` VARCHAR(255) NULL,
+  `providerPaymentId` VARCHAR(255) NULL,
+  `userId` INT NULL,
+  `planId` INT NULL,
+  `createdAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `subscriptions_user_id_idx` (`userId`),
+  KEY `subscriptions_plan_id_idx` (`planId`),
+  KEY `subscriptions_status_ends_at_idx` (`status`, `endsAt`),
+  CONSTRAINT `subscriptions_user_fk`
+    FOREIGN KEY (`userId`) REFERENCES `Users` (`id`)
+    ON UPDATE CASCADE ON DELETE SET NULL,
+  CONSTRAINT `subscriptions_plan_fk`
+    FOREIGN KEY (`planId`) REFERENCES `PremiumPlans` (`id`)
+    ON UPDATE CASCADE ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `Payments` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `amountInr` INT NOT NULL,
+  `currency` VARCHAR(255) NOT NULL DEFAULT 'INR',
+  `status` ENUM('created', 'paid', 'failed') NOT NULL DEFAULT 'created',
+  `provider` VARCHAR(255) NOT NULL DEFAULT 'manual',
+  `providerOrderId` VARCHAR(255) NULL,
+  `providerPaymentId` VARCHAR(255) NULL,
+  `providerSignature` VARCHAR(255) NULL,
+  `metadata` JSON NULL,
+  `userId` INT NULL,
+  `planId` INT NULL,
+  `subscriptionId` INT NULL,
+  `createdAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `payments_user_id_idx` (`userId`),
+  KEY `payments_plan_id_idx` (`planId`),
+  KEY `payments_subscription_id_idx` (`subscriptionId`),
+  KEY `payments_provider_order_id_idx` (`providerOrderId`),
+  CONSTRAINT `payments_user_fk`
+    FOREIGN KEY (`userId`) REFERENCES `Users` (`id`)
+    ON UPDATE CASCADE ON DELETE SET NULL,
+  CONSTRAINT `payments_plan_fk`
+    FOREIGN KEY (`planId`) REFERENCES `PremiumPlans` (`id`)
+    ON UPDATE CASCADE ON DELETE SET NULL,
+  CONSTRAINT `payments_subscription_fk`
+    FOREIGN KEY (`subscriptionId`) REFERENCES `Subscriptions` (`id`)
+    ON UPDATE CASCADE ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+Seed default premium plan:
+
+```sql
+INSERT INTO `PremiumPlans`
+  (`key`, `name`, `description`, `priceInr`, `durationDays`, `features`, `isActive`, `sortOrder`, `createdAt`, `updatedAt`)
+VALUES
+  (
+    'premium_monthly',
+    'Premium Plan',
+    'Unlock advanced discovery and unlimited connection actions.',
+    499,
+    30,
+    JSON_ARRAY('See all likes received', 'See profile visitors', 'Unlimited likes', 'Priority profile visibility'),
+    1,
+    1,
+    NOW(),
+    NOW()
+  )
+ON DUPLICATE KEY UPDATE
+  `name` = VALUES(`name`),
+  `description` = VALUES(`description`),
+  `priceInr` = VALUES(`priceInr`),
+  `durationDays` = VALUES(`durationDays`),
+  `features` = VALUES(`features`),
+  `isActive` = VALUES(`isActive`),
+  `sortOrder` = VALUES(`sortOrder`),
+  `updatedAt` = NOW();
+```
+
+If your existing users table is named `users` instead of `Users`, replace `REFERENCES Users (id)` with `REFERENCES users (id)` before running.
+
+If uploaded profile pictures are not showing, make sure the `Photos.url` column can store long image data URLs:
+
+```sql
+ALTER TABLE `Photos`
+  MODIFY COLUMN `url` MEDIUMTEXT NOT NULL;
+```
+
+---
+
 ## 🔐 Environment Variables
 
 Create `.env` file in root directory:
