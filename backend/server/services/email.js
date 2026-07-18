@@ -1,6 +1,7 @@
 import nodemailer from 'nodemailer';
 import dns from 'node:dns';
 import net from 'node:net';
+import tls from 'node:tls';
 
 function envValue(key, fallback = '') {
   return String(process.env[key] || fallback).trim().replace(/^"|"$/g, '');
@@ -15,11 +16,15 @@ function createTransporter() {
 
   const smtpHost = envValue('SMTP_HOST');
   const smtpPort = Number(envValue('SMTP_PORT', '587'));
+  const smtpSecure = envValue('SMTP_SECURE') === 'true';
 
   return nodemailer.createTransport({
     host: smtpHost,
     port: smtpPort,
-    secure: envValue('SMTP_SECURE') === 'true',
+    secure: smtpSecure,
+    connectionTimeout: 15000,
+    greetingTimeout: 15000,
+    socketTimeout: 30000,
     family: 4,
     lookup: (hostname, options, callback) => {
       dns.lookup(hostname, { ...options, family: 4 }, callback);
@@ -29,19 +34,31 @@ function createTransporter() {
         const [address] = await dns.promises.resolve4(smtpHost);
         if (!address) throw new Error(`No IPv4 address found for ${smtpHost}`);
 
-        const connection = net.connect({
-          host: address,
-          port: smtpPort,
-        });
-
-        connection.once('connect', () => {
-          callback(null, {
-            connection,
-            tls: {
+        const connection = smtpSecure
+          ? tls.connect({
+              host: address,
+              port: smtpPort,
               servername: smtpHost,
-            },
+            })
+          : net.connect({
+              host: address,
+              port: smtpPort,
+            });
+
+        if (smtpSecure) {
+          connection.once('secureConnect', () => {
+            callback(null, { connection });
           });
-        });
+        } else {
+          connection.once('connect', () => {
+            callback(null, {
+              connection,
+              tls: {
+                servername: smtpHost,
+              },
+            });
+          });
+        }
         connection.once('error', callback);
       } catch (error) {
         callback(error);
