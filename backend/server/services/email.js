@@ -15,6 +15,7 @@ function createTransporter() {
     host: envValue('SMTP_HOST'),
     port: Number(envValue('SMTP_PORT', '587')),
     secure: envValue('SMTP_SECURE') === 'true',
+    family: 4,
     auth: {
       user: envValue('SMTP_USER'),
       pass: envValue('SMTP_PASS'),
