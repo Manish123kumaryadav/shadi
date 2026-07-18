@@ -46,19 +46,28 @@ export async function updateMyProfile(req, res) {
 }
 
 export async function getProfileById(req, res) {
-  const profile = await Profile.findByPk(req.params.id, {
-    include: [User, Photo],
-  });
-
-  if (!profile) return res.status(404).json({ message: 'Profile not found' });
-
-  if (profile.userId !== req.user.id) {
-    await ProfileView.findOrCreate({
-      where: { viewerId: req.user.id, viewedUserId: profile.userId },
+  try {
+    const profile = await Profile.findByPk(req.params.id, {
+      include: [User, Photo],
     });
-  }
 
-  return res.json(formatProfile(profile));
+    if (!profile) return res.status(404).json({ message: 'Profile not found' });
+
+    if (profile.userId !== req.user.id) {
+      try {
+        await ProfileView.findOrCreate({
+          where: { viewerId: req.user.id, viewedUserId: profile.userId },
+        });
+      } catch (viewError) {
+        console.warn('Could not record profile view:', viewError.message);
+      }
+    }
+
+    return res.json(formatProfile(profile));
+  } catch (error) {
+    console.error('Get profile failed:', error);
+    return res.status(500).json({ message: 'Could not load profile' });
+  }
 }
 
 export async function getProfiles(req, res) {

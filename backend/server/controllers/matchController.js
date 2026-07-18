@@ -124,17 +124,24 @@ export async function getLikedProfiles(req, res) {
 }
 
 export async function getViews(req, res) {
-  const views = await ProfileView.findAll({
-    where: { viewedUserId: req.user.id },
-    include: [
-      {
-        model: User,
-        as: 'Viewer',
-        include: [{ model: Profile, include: [Photo] }],
-      },
-    ],
-    order: [['updatedAt', 'DESC']],
-  });
+  let views = [];
+
+  try {
+    views = await ProfileView.findAll({
+      where: { viewedUserId: req.user.id },
+      include: [
+        {
+          model: User,
+          as: 'Viewer',
+          include: [{ model: Profile, include: [Photo] }],
+        },
+      ],
+      order: [['updatedAt', 'DESC']],
+    });
+  } catch (error) {
+    console.warn('Could not load profile views:', error.message);
+    return res.json([]);
+  }
 
   res.json(views
     .map((view) => view.Viewer?.Profile)

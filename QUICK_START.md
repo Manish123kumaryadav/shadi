@@ -334,6 +334,27 @@ ALTER TABLE `Photos`
   MODIFY COLUMN `url` MEDIUMTEXT NOT NULL;
 ```
 
+If profile open/view count gives a server error, create or fix the profile view table:
+
+```sql
+CREATE TABLE IF NOT EXISTS `ProfileViews` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `viewerId` INT NULL,
+  `viewedUserId` INT NULL,
+  `createdAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `profile_views_viewer_viewed_unique` (`viewerId`, `viewedUserId`),
+  KEY `profile_views_viewed_user_id_idx` (`viewedUserId`),
+  CONSTRAINT `profile_views_viewer_fk`
+    FOREIGN KEY (`viewerId`) REFERENCES `Users` (`id`)
+    ON UPDATE CASCADE ON DELETE SET NULL,
+  CONSTRAINT `profile_views_viewed_fk`
+    FOREIGN KEY (`viewedUserId`) REFERENCES `Users` (`id`)
+    ON UPDATE CASCADE ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
 ---
 
 ## 🔐 Environment Variables
