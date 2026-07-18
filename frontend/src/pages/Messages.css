@@ -92,6 +92,16 @@
   flex-shrink: 0;
 }
 
+.profile-open-btn,
+.chat-profile-open {
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
 .conversation-avatar img {
   width: 50px;
   height: 50px;
@@ -172,6 +182,11 @@
   align-items: center;
   gap: 1rem;
   min-width: 0;
+}
+
+.chat-profile-open:hover h3,
+.profile-open-btn:hover + .conversation-info h4 {
+  color: #e74c3c;
 }
 
 .chat-user-info img {

@@ -73,6 +73,7 @@ function formatConversation(conversation, currentUserId) {
   return {
     id: conversation.id,
     userId: otherMember?.id,
+    profileId: profile?.id,
     name: otherMember?.fullName || "Member",
     avatar:
       primaryPhoto?.url ||

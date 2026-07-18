@@ -546,6 +546,15 @@ const handleReaction = async (message, emoji) => {
     await loadMessages(conversation);
   };
 
+  const openConversationProfile = (conversation, event) => {
+    event?.stopPropagation();
+    if (!conversation?.profileId) {
+      alert("Profile details are not available for this user yet.");
+      return;
+    }
+    navigate(`/profiles/${conversation.profileId}`);
+  };
+
   return (
     <div className="messages-container">
       <div className="messages-wrapper">
@@ -570,12 +579,17 @@ const handleReaction = async (message, emoji) => {
                 className={`conversation-item ${selectedConversation?.id === conversation.id ? "active" : ""}`}
                 onClick={() => handleSelectConversation(conversation)}
               >
-                <div className="conversation-avatar">
+                <button
+                  type="button"
+                  className="conversation-avatar profile-open-btn"
+                  onClick={(event) => openConversationProfile(conversation, event)}
+                  title="View profile"
+                >
                   <img src={conversation.avatar} alt={conversation.name} />
                   {conversation.online && (
                     <div className="online-indicator"></div>
                   )}
-                </div>
+                </button>
 
                 <div className="conversation-info">
                   <h4>{conversation.name}</h4>
@@ -599,7 +613,12 @@ const handleReaction = async (message, emoji) => {
             <>
               {/* Chat Header */}
               <div className="chat-header">
-                <div className="chat-user-info">
+                <button
+                  type="button"
+                  className="chat-user-info chat-profile-open"
+                  onClick={(event) => openConversationProfile(selectedConversation, event)}
+                  title="View profile"
+                >
                   <img
                     src={selectedConversation.avatar}
                     alt={selectedConversation.name}
@@ -610,7 +629,7 @@ const handleReaction = async (message, emoji) => {
                       {selectedConversation.online ? "Active now" : "Offline"}
                     </p>
                   </div>
-                </div>
+                </button>
                 <div className="chat-actions">
                   <button
                     className="icon-btn"
