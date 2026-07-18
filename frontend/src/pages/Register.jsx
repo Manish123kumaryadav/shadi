@@ -33,6 +33,7 @@ const defaultProfilePhotos = {
   male: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&w=400',
   female: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&w=400',
 };
+const todayDate = new Date().toISOString().slice(0, 10);
 
 const Register = () => {
   const navigate = useNavigate();
@@ -54,6 +55,7 @@ const Register = () => {
     password: '',
     confirmPassword: '',
     photoUrl: '',
+    photoFile: null,
     acceptTerms: false,
   });
 
@@ -107,14 +109,20 @@ const Register = () => {
         avatarSize,
         avatarSize,
       );
-      const photoUrl = canvas.toDataURL('image/jpeg', 0.58);
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          setErrors((prev) => ({ ...prev, photoUrl: 'Could not prepare this image' }));
+          return;
+        }
 
-      setFormData((prev) => ({
-        ...prev,
-        photoUrl,
-      }));
-      setErrors((prev) => ({ ...prev, photoUrl: '', form: '' }));
-      URL.revokeObjectURL(image.src);
+        setFormData((prev) => ({
+          ...prev,
+          photoUrl: URL.createObjectURL(blob),
+          photoFile: new File([blob], 'profile-photo.jpg', { type: 'image/jpeg' }),
+        }));
+        setErrors((prev) => ({ ...prev, photoUrl: '', form: '' }));
+        URL.revokeObjectURL(image.src);
+      }, 'image/jpeg', 0.58);
     };
     image.src = URL.createObjectURL(file);
   };
@@ -127,6 +135,15 @@ const Register = () => {
       if (!formData.fullName.trim()) nextErrors.fullName = 'Name is required';
       if (!formData.gender) nextErrors.gender = 'Gender is required';
       if (!formData.dob) nextErrors.dob = 'Date of birth is required';
+      if (formData.dob && !/^\d{4}-\d{2}-\d{2}$/.test(formData.dob)) {
+        nextErrors.dob = 'Enter a valid date of birth';
+      }
+      if (formData.dob && formData.dob > todayDate) {
+        nextErrors.dob = 'Date of birth cannot be in the future';
+      }
+      if (formData.dob && formData.dob < '1900-01-01') {
+        nextErrors.dob = 'Enter a valid date of birth';
+      }
     }
 
     if (targetStep === 1) {
@@ -168,10 +185,20 @@ const Register = () => {
 
     try {
       setIsSubmitting(true);
-      await authService.register({
+      const registrationData = new FormData();
+      Object.entries({
         ...formData,
         lookingFor: formData.gender === 'female' ? 'male' : 'female',
+      }).forEach(([key, value]) => {
+        if (key === 'photoUrl' || key === 'photoFile') return;
+        registrationData.append(key, String(value));
       });
+
+      if (formData.photoFile) {
+        registrationData.append('photo', formData.photoFile);
+      }
+
+      await authService.register(registrationData);
 
       alert('Registration successful! Please login with OTP.');
       navigate('/login', { state: { mobile: formData.mobile } });
@@ -291,6 +318,8 @@ const Register = () => {
                       type="date"
                       name="dob"
                       value={formData.dob}
+                      min="1900-01-01"
+                      max={todayDate}
                       onChange={handleChange}
                       className={errors.dob ? 'input-error' : ''}
                     />

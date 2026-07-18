@@ -1,5 +1,6 @@
 import express from 'express';
 import { authRequired } from '../middleware/auth.js';
+import { multipartForm } from '../middleware/multipart.js';
 import {
   getMe,
   login,
@@ -52,7 +53,7 @@ function adminRequired(req, res, next) {
   return res.status(403).json({ message: 'Admin access required' });
 }
 
-router.post('/auth/register', register);
+router.post('/auth/register', multipartForm, register);
 router.post('/auth/send-otp', sendOtp);
 router.post('/auth/verify-otp', verifyOtp);
 router.post('/auth/login', login);

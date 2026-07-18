@@ -11,6 +11,17 @@ function signToken(user) {
   });
 }
 
+function isValidDob(dob) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dob || ''))) return false;
+
+  const date = new Date(`${dob}T00:00:00.000Z`);
+  if (Number.isNaN(date.getTime())) return false;
+  if (date.toISOString().slice(0, 10) !== dob) return false;
+
+  const year = date.getUTCFullYear();
+  return year >= 1900 && date.getTime() <= Date.now();
+}
+
 export async function register(req, res) {
   try {
     const {
@@ -35,13 +46,21 @@ export async function register(req, res) {
       return res.status(400).json({ message: 'Name, email, mobile, password and DOB are required' });
     }
 
+    if (!isValidDob(dob)) {
+      return res.status(400).json({ message: 'Enter a valid date of birth' });
+    }
+
     const normalizedLookingFor = lookingFor || gender || 'female';
     const normalizedGender = lookingFor ? gender : inferGenderFromLookingFor(normalizedLookingFor);
-    const customPhotoUrl = typeof photoUrl === 'string'
+    const uploadedPhoto = req.files?.photo;
+    const uploadedPhotoUrl = uploadedPhoto?.contentType?.startsWith('image/')
+      ? `data:${uploadedPhoto.contentType};base64,${uploadedPhoto.buffer.toString('base64')}`
+      : '';
+    const customPhotoUrl = uploadedPhotoUrl || (typeof photoUrl === 'string'
       && (photoUrl.startsWith('data:image/') || photoUrl.startsWith('http'))
       && photoUrl.length <= 1000
       ? photoUrl
-      : '';
+      : '');
     const passwordHash = await bcrypt.hash(password, 10);
 
     const user = await User.create({
@@ -68,13 +87,23 @@ export async function register(req, res) {
       interests: [],
     });
 
-    await Photo.create({
-      profileId: profile.id,
-      isPrimary: true,
-      url: customPhotoUrl || (normalizedGender === 'male'
+    const defaultPhotoUrl = normalizedGender === 'male'
         ? 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&w=400'
-        : 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&w=400'),
-    });
+        : 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&w=400';
+
+    try {
+      await Photo.create({
+        profileId: profile.id,
+        isPrimary: true,
+        url: customPhotoUrl || defaultPhotoUrl,
+      });
+    } catch (photoError) {
+      await Photo.create({
+        profileId: profile.id,
+        isPrimary: true,
+        url: defaultPhotoUrl,
+      });
+    }
 
     const savedProfile = await Profile.findByPk(profile.id, {
       include: [User, Photo],
